@@ -44,7 +44,7 @@ def wait_for_elements(driver, selectors, timeout=30):
         print(f"Timeout waiting for elements: {selectors}")
         raise
 
-# -------------- Profile Scrape --------------
+# -------------- Get Each Profile --------------
 def get_profile_details(driver, url):
     try:
         driver.get(url)
@@ -91,16 +91,11 @@ def get_profile_details(driver, url):
 
         # Approaches
         approaches = []
-
-        # Find all individual approach sections
         approach_blocks = driver.find_elements(By.CSS_SELECTOR, '.profile-approaches .approach')
 
         for block in approach_blocks:
             try:
-                # Heading
                 heading = block.find_element(By.CSS_SELECTOR, '.approach-heading').text.strip()
-
-                # Find all <div> tags inside this block (typically 3: empty, heading, content)
                 divs = block.find_elements(By.TAG_NAME, 'div')
                 body = divs[1].text.strip() if len(divs) > 1 else ''
 
@@ -111,7 +106,6 @@ def get_profile_details(driver, url):
                 print(f"Skipping block due to error: {e}")
                 continue
 
-        # Specialties section
         specialities = []
         specialty_desc_list = driver.find_elements(By.CSS_SELECTOR, '.uk-switcher.specialty-card__specialtyDesc > li')
         
@@ -170,7 +164,7 @@ def get_profile_details(driver, url):
         print(f"Failed to load profile {url}: {e}")
         return {}
 
-# -------------- All Providers Scrape --------------
+# -------------- Get All Providers --------------
 def get_providers(driver):
     driver.get('https://www.portlandtherapycenter.com/therapists?zip=')
 
@@ -202,8 +196,8 @@ def get_providers(driver):
     print(f"Found {len(providers)} providers")
     return providers
 
-# -------------- Main --------------
-def main():
+# -------------- Main Scraper --------------
+def scraper():
     DATA_FILE = 'providers.json'
     ERROR_FILE = 'failed_batches.json'
     BATCH_SIZE = 20
@@ -211,7 +205,6 @@ def main():
     providers = []
     failed_batches = []
 
-    # Load any previously failed batches
     if os.path.exists(ERROR_FILE):
         with open(ERROR_FILE, 'r') as f:
             failed_batches = json.load(f)
@@ -232,12 +225,10 @@ def main():
             json.dump(providers, f, indent=2)
             print(f"Saved {len(providers)} providers to file.")
 
-    # Get each provider details (in batches)
     for i in range(0, len(providers), BATCH_SIZE):
         batch_num = (i // BATCH_SIZE) + 1
         batch = providers[i:i + BATCH_SIZE]
-        
-        # Skip if batch was already processed successfully
+
         if all(p.get('profile_fetched', False) for p in batch):
             print(f"Skipping batch {batch_num} - already processed")
             continue
@@ -264,26 +255,22 @@ def main():
                     print(f"Error processing provider {provider.get('name', 'unknown')}: {str(e)}")
                     continue
 
-            # Save after each successful batch
             with open(DATA_FILE, 'w') as f:
                 json.dump(providers, f, indent=2)
                 print(f"Batch {batch_num} saved successfully.")
 
         except Exception as e:
             print(f"Error processing batch {batch_num}: {str(e)}")
-            # Save failed batch info
             failed_batches.append({
                 'batch_num': batch_num,
                 'start_index': i,
                 'providers': [p['url'] for p in batch]
             })
-            
-            # Save failed batches to file
+
             with open(ERROR_FILE, 'w') as f:
                 json.dump(failed_batches, f, indent=2)
                 print(f"Saved failed batch {batch_num} to {ERROR_FILE}")
 
-            # Still try to save progress
             try:
                 with open(DATA_FILE, 'w') as f:
                     json.dump(providers, f, indent=2)
@@ -315,4 +302,4 @@ def main():
 
 # -------------- Run --------------
 if __name__ == '__main__':
-    main()
+    scraper()
