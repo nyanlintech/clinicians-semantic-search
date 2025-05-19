@@ -15,6 +15,7 @@ def get_headless_driver():
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920x1080")
+
     return webdriver.Chrome(options=options)
 
 # -------------- Util Functions --------------
