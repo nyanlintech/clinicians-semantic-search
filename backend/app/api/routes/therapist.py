@@ -4,7 +4,7 @@ from typing import List, Dict
 from app.db.session import SessionLocal
 from app.services.search import SearchService
 from app.models.therapist import Therapist
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 router = APIRouter()
 search_service = SearchService()
@@ -20,32 +20,34 @@ class SearchQuery(BaseModel):
     query: str
     limit: int = 10
 
-class Speciality(BaseModel):
-    name: str
-    description: str
+class Approach(RootModel):
+    root: str
+
+class Speciality(RootModel):
+    root: str
 
 class TherapistResponse(BaseModel):
     id: int
     name: str
-    full_name: str
-    pronouns: str
-    title: str
-    credentials: str
-    status: str
-    intro: str
-    ideal_client: str
-    approach_summary: str
-    rate_min: str
-    rate_max: str
-    free_consultation: bool
-    practicing_since: str
-    languages: str
-    services: List[str]
-    insurance: List[str]
-    specialities: List[Speciality]
-    other_techniques: List[str]
-    other_issues: List[str]
-    url: str
+    full_name: str | None
+    pronouns: str | None
+    title: str | None
+    credentials: str | None
+    status: str | None
+    intro: str | None
+    ideal_client: str | None
+    approaches: List[Approach] | None
+    rate_min: str | None
+    rate_max: str | None
+    free_consultation: bool | None
+    practicing_since: str | None
+    languages: str | None
+    services: List[str] | None
+    insurance: List[str] | None
+    specialities: List[Speciality] | None
+    other_techniques: List[str] | None
+    other_issues: List[str] | None
+    url: str | None
 
     class Config:
         from_attributes = True

@@ -8,7 +8,7 @@ class TherapistProcessor:
         if not text or not isinstance(text, str):
             return ""
         text = re.sub(r'\s+', ' ', text)
-        text = re.sub(r'[^\w\s.,!?-]', '', text)
+        text = re.sub(r'[^\w\s.,!?-]', ' ', text)
         return text.strip()
 
     @staticmethod
@@ -44,20 +44,23 @@ class TherapistProcessor:
         approaches = raw_data.get('approaches', [])
         specialities = raw_data.get('specialities', [])
         
-        # Create summaries for embedding
-        approach_summary = " ".join([
-            f"{TherapistProcessor.clean_text(key)}: {TherapistProcessor.clean_text(val)}"
-            for item in approaches
-            for key, val in item.items()
-            if isinstance(val, str)
-        ]) if approaches else ""
+        # Transform approaches into simple strings
+        formatted_approaches = []
+        for approach in approaches:
+            for key, val in approach.items():
+                if isinstance(val, str):
+                    formatted_approaches.append(TherapistProcessor.clean_text(f"{key}: {val}"))
         
-        specialties_summary = " ".join([
-            f"{TherapistProcessor.clean_text(key)}: {TherapistProcessor.clean_text(val)}"
-            for item in specialities
-            for key, val in item.items()
-            if isinstance(val, str)
-        ]) if specialities else ""
+        # Transform specialities into simple strings
+        formatted_specialities = []
+        for speciality in specialities:
+            for key, val in speciality.items():
+                if isinstance(val, str):
+                    formatted_specialities.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+        
+        # Create summaries for embedding
+        approach_summary = " ".join(formatted_approaches) if formatted_approaches else ""
+        specialties_summary = " ".join(formatted_specialities) if formatted_specialities else ""
         
         processed = {
             'name': TherapistProcessor.clean_text(raw_data.get('name', '')),
@@ -73,8 +76,8 @@ class TherapistProcessor:
             'services': TherapistProcessor.clean_list(raw_data.get('services', [])),
             'insurance': TherapistProcessor.clean_list(raw_data.get('insurance', [])),
             'ideal_client': TherapistProcessor.clean_text(raw_data.get('ideal_client', '')),
-            'approaches': approaches,  # Keep as array of objects
-            'specialities': specialities,  # Keep as array of objects
+            'approaches': formatted_approaches,  # Now in the correct format
+            'specialities': formatted_specialities,  # Now in the correct format
             'approach_summary': approach_summary,  # String summary for embedding
             'specialties_summary': specialties_summary,  # String summary for embedding
             'other_techniques': TherapistProcessor.clean_list(raw_data.get('other_techniques', [])),
