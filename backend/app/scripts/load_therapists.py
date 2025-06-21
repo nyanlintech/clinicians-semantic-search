@@ -5,7 +5,11 @@ from app.services.ingestion import IngestionService
 from app.db.init_db import init_db
 import logging
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 def load_therapists(json_file: str):

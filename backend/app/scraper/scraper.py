@@ -2,6 +2,7 @@ import json
 import os
 import re
 import pdb
+import html
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -18,12 +19,33 @@ def get_headless_driver():
 
     return webdriver.Chrome(options=options)
 
+# -------------- Text Cleaning --------------
+def clean_scraped_text(text: str) -> str:
+    """Clean text scraped from web pages to handle encoding issues."""
+    if not text or not isinstance(text, str):
+        return ""
+    
+    # Decode HTML entities first
+    text = html.unescape(text)
+    
+    # Replace multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Remove control characters but preserve Unicode
+    text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
+    
+    # Remove any remaining escape sequences
+    text = text.replace('\\', '')
+    
+    return text.strip()
+
 # -------------- Util Functions --------------
 def get_selector_value(driver, value, attr=None):
     """Returns element's text by default or provided attribute value."""
     try:
         element = driver.find_element(By.CSS_SELECTOR, value)
-        return element.get_attribute(attr) if attr else element.get_attribute('textContent').strip()
+        raw_text = element.get_attribute(attr) if attr else element.get_attribute('textContent').strip()
+        return clean_scraped_text(raw_text)
     except NoSuchElementException:
         return ""
 
@@ -77,13 +99,13 @@ def get_profile_details(driver, url):
 
         # Services
         services = [
-            service.text.strip()
+            clean_scraped_text(service.text.strip())
             for service in driver.find_elements(By.CSS_SELECTOR, '.glance-services li')
         ]
 
         # Insurance
         insurance_providers = [
-            insurance.text.strip()
+            clean_scraped_text(insurance.text.strip())
             for insurance in driver.find_elements(By.CSS_SELECTOR, '.glance-insurance li')
         ]
 
@@ -96,9 +118,9 @@ def get_profile_details(driver, url):
 
         for block in approach_blocks:
             try:
-                heading = block.find_element(By.CSS_SELECTOR, '.approach-heading').text.strip()
+                heading = clean_scraped_text(block.find_element(By.CSS_SELECTOR, '.approach-heading').text.strip())
                 divs = block.find_elements(By.TAG_NAME, 'div')
-                body = divs[1].text.strip() if len(divs) > 1 else ''
+                body = clean_scraped_text(divs[1].text.strip()) if len(divs) > 1 else ''
 
                 approaches.append({
                     heading: body
@@ -114,10 +136,10 @@ def get_profile_details(driver, url):
             try:
                 s_link = s_item.find_element(By.CSS_SELECTOR, 'a')
                 raw_text = s_link.get_attribute('textContent') or s_link.text
-                name = raw_text.replace('External link', '').strip()
+                name = clean_scraped_text(raw_text.replace('External link', '').strip())
                 
                 p_elem = s_item.find_element(By.TAG_NAME, 'p')
-                description = p_elem.get_attribute('textContent').strip()
+                description = clean_scraped_text(p_elem.get_attribute('textContent').strip())
 
                 if name and description:
                     specialities.append({
@@ -130,12 +152,12 @@ def get_profile_details(driver, url):
         other_techniques = []
 
         for elem in driver.find_elements(By.CSS_SELECTOR, '#other-techniques li a'):
-            other_techniques.append(elem.get_attribute('textContent').strip())
+            other_techniques.append(clean_scraped_text(elem.get_attribute('textContent').strip()))
 
         other_issues = []
 
         for elem in driver.find_elements(By.CSS_SELECTOR, '#other-issues li a'):
-            other_issues.append(elem.get_attribute('textContent').strip())
+            other_issues.append(clean_scraped_text(elem.get_attribute('textContent').strip()))
 
         providerInfo = {
             'name': provider_name,

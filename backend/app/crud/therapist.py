@@ -10,7 +10,7 @@ def get_therapists(db: Session, skip: int = 0, limit: int = 100) -> List[Therapi
     return db.query(Therapist).offset(skip).limit(limit).all()
 
 def create_therapist(db: Session, therapist: TherapistCreate) -> Therapist:
-    db_therapist = Therapist(**therapist.dict(exclude_unset=True))
+    db_therapist = Therapist(**therapist.model_dump(exclude_unset=True))
     db.add(db_therapist)
     db.commit()
     db.refresh(db_therapist)

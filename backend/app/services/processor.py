@@ -1,19 +1,31 @@
 from typing import Dict, List, Any
 import re
+import html
 
 class TherapistProcessor:
     @staticmethod
     def clean_text(text: str) -> str:
-        """Clean and normalize text."""
+        """Clean and normalize text while preserving Unicode characters."""
         if not text or not isinstance(text, str):
             return ""
+        
+        # Decode HTML entities first (e.g., &amp; -> &)
+        text = html.unescape(text)
+        
+        # Replace multiple spaces with a single space
         text = re.sub(r'\s+', ' ', text)
-        text = re.sub(r'[^\w\s.,!?-]', ' ', text)
+        
+        # Remove control characters but preserve Unicode
+        text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
+        
+        # Remove any remaining escape sequences that might be causing issues
+        text = text.replace('\\', '')
+        
         return text.strip()
 
     @staticmethod
     def clean_list(items: List[str]) -> List[str]:
-        """Clean a list of strings."""
+        """Clean a list of strings while preserving Unicode."""
         if not items or not isinstance(items, list):
             return []
         return [TherapistProcessor.clean_text(item) for item in items if isinstance(item, str)]
@@ -47,16 +59,22 @@ class TherapistProcessor:
         # Transform approaches into simple strings
         formatted_approaches = []
         for approach in approaches:
-            for key, val in approach.items():
-                if isinstance(val, str):
-                    formatted_approaches.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+            if isinstance(approach, dict):
+                for key, val in approach.items():
+                    if isinstance(val, str):
+                        formatted_approaches.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+            elif isinstance(approach, str):
+                formatted_approaches.append(TherapistProcessor.clean_text(approach))
         
         # Transform specialities into simple strings
         formatted_specialities = []
         for speciality in specialities:
-            for key, val in speciality.items():
-                if isinstance(val, str):
-                    formatted_specialities.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+            if isinstance(speciality, dict):
+                for key, val in speciality.items():
+                    if isinstance(val, str):
+                        formatted_specialities.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+            elif isinstance(speciality, str):
+                formatted_specialities.append(TherapistProcessor.clean_text(speciality))
         
         # Create summaries for embedding
         approach_summary = " ".join(formatted_approaches) if formatted_approaches else ""
