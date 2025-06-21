@@ -1,13 +1,27 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import therapist
 from app.db.session import SessionLocal
 from app.services.scheduler import SchedulerService
 
+@asynccontextmanager
+
+async def lifespan(app: FastAPI):
+    db = SessionLocal()
+    scheduler = SchedulerService(db)
+    scheduler.start()
+    
+    yield
+    
+    scheduler.stop()
+    db.close()
+
 app = FastAPI(
     title="Therapist Semantic Search API",
     description="API for semantic search of therapist profiles using embeddings",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Configure CORS
@@ -21,20 +35,6 @@ app.add_middleware(
 
 # Include routers
 app.include_router(therapist.router, prefix="/api/v1", tags=["therapists"])
-
-# Initialize scheduler
-@app.on_event("startup")
-async def startup_event():
-    db = SessionLocal()
-    scheduler = SchedulerService(db)
-    scheduler.start()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    db = SessionLocal()
-    scheduler = SchedulerService(db)
-    scheduler.stop()
-    db.close()
 
 @app.get("/")
 async def root():
