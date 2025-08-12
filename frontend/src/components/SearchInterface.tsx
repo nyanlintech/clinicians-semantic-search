@@ -2,12 +2,9 @@ import { useState } from 'react';
 import {
   Box,
   TextField,
-  Autocomplete,
-  Chip,
   Paper,
   Typography,
   Container,
-  CircularProgress,
   Button,
   IconButton,
   Divider,
@@ -15,16 +12,24 @@ import {
   CardContent,
   Alert,
   Collapse,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useQuery } from 'react-query';
 import type { Filters } from '../types/therapist';
 import { getFilters } from '../services/api';
+import { v4 as uuidv4 } from 'uuid';
+import DynamicFilters from './DynamicFilters';
 
-interface SearchCriterion {
+interface SearchCriteria {
   id: string;
   query: string;
 }
@@ -32,50 +37,53 @@ interface SearchCriterion {
 interface SearchInterfaceProps {
   onSearch: (criteria: string[], insurance: string[], titles: string[]) => void;
   isLoading: boolean;
+  searchResults: any[];
+  onFilterChange: (filters: Record<string, string[]>) => void;
+  selectedFilters: Record<string, string[]>;
+  onClearResults: () => void;
 }
 
-export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) => {
-  const [criteria, setCriteria] = useState<SearchCriterion[]>([
-    { id: '1', query: '' }
+export const SearchInterface = ({ onSearch, isLoading, searchResults, onFilterChange, selectedFilters, onClearResults }: SearchInterfaceProps) => {
+  const [criteria, setCriteria] = useState<SearchCriteria[]>([
+    { id: uuidv4(), query: '' },
   ]);
-  const [selectedInsurance, setSelectedInsurance] = useState<string[]>([]);
-  const [selectedTitles, setSelectedTitles] = useState<string[]>([]);
   const [showExamples, setShowExamples] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const { data: filters, isLoading: isLoadingFilters } = useQuery<Filters>(
-    'filters',
-    getFilters
-  );
+  useQuery<Filters>('filters', getFilters);
 
   const exampleCriteria = [
     ['therapist who specializes in anxiety', 'speaks Spanish'],
     ['ADHD specialist', 'works with adults'],
     ['trauma therapist', 'uses EMDR therapy'],
     ['couples counselor', 'accepts Kaiser insurance'],
-    ['depression specialist', 'culturally sensitive therapist']
+    ['depression specialist', 'culturally sensitive therapist'],
   ];
 
-  const addCriterion = () => {
-    const newId = Date.now().toString();
-    setCriteria([...criteria, { id: newId, query: '' }]);
+  const addCriteria = () => {
+    setCriteria([...criteria, { id: uuidv4(), query: '' }]);
   };
 
-  const removeCriterion = (id: string) => {
-    if (criteria.length > 1) {
-      setCriteria(criteria.filter(criterion => criterion.id !== id));
-    }
+  const clearAllResults = () => {
+    onClearResults();
   };
 
-  const updateCriterion = (id: string, query: string) => {
-    setCriteria(criteria.map(criterion => 
-      criterion.id === id ? { ...criterion, query } : criterion
-    ));
+  const removeCriteria = (id: string) => {
+    setCriteria(criteria.filter(criterion => criterion.id !== id));
+  };
+
+  const updateCriteria = (id: string, query: string) => {
+    setCriteria(
+      criteria.map(criterion =>
+        criterion.id === id ? { ...criterion, query } : criterion
+      )
+    );
   };
 
   const loadExample = (exampleSet: string[]) => {
-    const newCriteria = exampleSet.map((query, index) => ({
-      id: Date.now() + index + '',
-      query
+    const newCriteria = exampleSet.map(query => ({
+      id: uuidv4(),
+      query,
     }));
     setCriteria(newCriteria);
     setShowExamples(false);
@@ -85,26 +93,34 @@ export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) =
     const validCriteria = criteria
       .map(c => c.query.trim())
       .filter(q => q.length > 0);
-    
+
     if (validCriteria.length > 0) {
-      onSearch(validCriteria, selectedInsurance, selectedTitles);
+      onSearch(validCriteria, [], []);
     }
   };
 
-  const handleKeyPress = (event: React.KeyboardEvent) => {
+  const handleKeyEvent = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       handleSearch();
     }
   };
 
+  const hasActiveFilters = Object.keys(selectedFilters).length > 0;
+
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom align="center">
           Find Your PDX Therapist
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }} align="center">
-          Add multiple criteria to find therapists that match all your specific needs
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mb: 4 }}
+          align="center"
+        >
+          Add multiple criteria to find therapists that match all your specific
+          needs
         </Typography>
 
         {/* Examples Section */}
@@ -117,7 +133,7 @@ export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) =
           >
             {showExamples ? 'Hide Examples' : 'Show Examples'}
           </Button>
-          
+
           <Collapse in={showExamples}>
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
@@ -126,14 +142,14 @@ export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) =
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {exampleCriteria.map((example, index) => (
                   <Button
-                    key={index}
+                    key={`example-${index}-${example.join('-')}`}
                     onClick={() => loadExample(example)}
                     variant="outlined"
                     size="small"
-                    sx={{ 
-                      justifyContent: 'flex-start', 
+                    sx={{
+                      justifyContent: 'flex-start',
                       textTransform: 'none',
-                      fontSize: '0.875rem'
+                      fontSize: '0.875rem',
                     }}
                   >
                     {example.join(' + ')}
@@ -153,45 +169,72 @@ export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) =
               </Typography>
               <Button
                 startIcon={<AddIcon />}
-                onClick={addCriterion}
+                onClick={addCriteria}
                 variant="outlined"
                 size="small"
                 disabled={isLoading}
+                sx={{ mr: 2 }}
               >
-                Add Criterion
+                Add Criteria
               </Button>
+              {searchResults.length > 0 && (
+                <Button
+                  startIcon={<FilterListIcon />}
+                  onClick={() => setShowFilters(true)}
+                  variant={hasActiveFilters ? "contained" : "outlined"}
+                  size="small"
+                  disabled={isLoading}
+                  color={hasActiveFilters ? "primary" : "inherit"}
+                  sx={{ mr: 2 }}
+                >
+                  Filter Results {hasActiveFilters && `(${Object.keys(selectedFilters).length})`}
+                </Button>
+              )}
+              {searchResults.length > 0 && (
+                <Button
+                  startIcon={<ClearIcon />}
+                  onClick={clearAllResults}
+                  variant="outlined"
+                  size="small"
+                  disabled={isLoading}
+                  color="error"
+                >
+                  Clear Results
+                </Button>
+              )}
             </Box>
 
             {criteria.map((criterion, index) => (
               <Box key={criterion.id} sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ minWidth: '80px', fontWeight: 'medium' }}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ minWidth: '120px', fontWeight: 'medium' }}
                   >
                     {index === 0 ? 'Looking for' : 'AND also'}
                   </Typography>
                   <TextField
                     fullWidth
-                    label={`Criterion ${index + 1}`}
                     variant="outlined"
                     size="small"
                     value={criterion.query}
-                    onChange={(e) => updateCriterion(criterion.id, e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onChange={e =>
+                      updateCriteria(criterion.id, e.target.value)
+                    }
+                    onKeyDown={handleKeyEvent}
                     placeholder={
-                      index === 0 
-                        ? "e.g., therapist who specializes in anxiety"
+                      index === 0
+                        ? 'e.g., therapist who specializes in anxiety'
                         : index === 1
-                        ? "e.g., speaks Spanish"
-                        : "e.g., accepts my insurance"
+                        ? 'e.g., speaks Spanish'
+                        : 'e.g., accepts my insurance'
                     }
                     disabled={isLoading}
                   />
                   {criteria.length > 1 && (
                     <IconButton
-                      onClick={() => removeCriterion(criterion.id)}
+                      onClick={() => removeCriteria(criterion.id)}
                       disabled={isLoading}
                       color="error"
                       size="small"
@@ -215,93 +258,35 @@ export const SearchInterface = ({ onSearch, isLoading }: SearchInterfaceProps) =
                 size="large"
                 sx={{ px: 4 }}
               >
-                {criteria.filter(c => c.query.trim()).length > 1 
-                  ? `Search with ${criteria.filter(c => c.query.trim()).length} criteria`
-                  : 'Search Therapists'
-                }
+                {criteria.filter(c => c.query.trim()).length > 1
+                  ? `Search with ${
+                      criteria.filter(c => c.query.trim()).length
+                    } criteria`
+                  : 'Search Therapists'}
               </Button>
             </Box>
           </CardContent>
         </Card>
 
-        {/* Filters Section */}
-        <Card variant="outlined">
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 3 }}>
-              Additional Filters (Optional)
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Autocomplete
-                multiple
-                options={filters?.titles || []}
-                value={selectedTitles}
-                onChange={(_, newValue) => setSelectedTitles(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Therapist Title"
-                    placeholder="Select titles"
-                    disabled={isLoading || isLoadingFilters}
-                    size="small"
-                  />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
-                    return (
-                      <Chip
-                        key={key}
-                        label={option}
-                        size="small"
-                        {...chipProps}
-                        disabled={isLoading}
-                      />
-                    );
-                  })
-                }
-                sx={{ minWidth: 250, flexGrow: 1 }}
-              />
-
-              <Autocomplete
-                multiple
-                options={filters?.insurance || []}
-                value={selectedInsurance}
-                onChange={(_, newValue) => setSelectedInsurance(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Insurance"
-                    placeholder="Select insurance"
-                    disabled={isLoading || isLoadingFilters}
-                    size="small"
-                  />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
-                    return (
-                      <Chip
-                        key={key}
-                        label={option}
-                        size="small"
-                        {...chipProps}
-                        disabled={isLoading}
-                      />
-                    );
-                  })
-                }
-                sx={{ minWidth: 250, flexGrow: 1 }}
-              />
-            </Box>
-          </CardContent>
-        </Card>
-
-        {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <CircularProgress />
-          </Box>
-        )}
+        {/* Filters Modal */}
+        <Dialog
+          open={showFilters}
+          onClose={() => setShowFilters(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Filter Results</DialogTitle>
+          <DialogContent sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+            <DynamicFilters
+              searchResults={searchResults}
+              selectedFilters={selectedFilters}
+              onFilterChange={onFilterChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowFilters(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Container>
   );

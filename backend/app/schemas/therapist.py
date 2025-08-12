@@ -23,6 +23,9 @@ class TherapistBase(BaseModel):
     other_techniques: Optional[List[str]]
     other_issues: Optional[List[str]]
     url: Optional[str]
+    image: Optional[str]
+    telehealth: Optional[bool]
+    in_person: Optional[bool]
 
 class TherapistCreate(TherapistBase):
     embedding: Optional[List[float]]

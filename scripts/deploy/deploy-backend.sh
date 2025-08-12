@@ -1,9 +1,11 @@
-#chore: update backend deployment script
-
 #!/bin/bash
-echo "🚀 Deploying backend to Render..."
+echo "Deploying backend to Render..."
 
-cd backend
+# Get the project root directory (two levels up from this script)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+cd "$PROJECT_ROOT/backend"
 git add .
 git commit -m "Deploy backend - $(date)"
 git push origin main

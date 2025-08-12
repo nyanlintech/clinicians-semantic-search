@@ -6,8 +6,8 @@ from app.schemas.therapist import TherapistCreate, TherapistOut
 def get_therapist(db: Session, therapist_id: int) -> Optional[Therapist]:
     return db.query(Therapist).filter(Therapist.id == therapist_id).first()
 
-def get_therapists(db: Session, skip: int = 0, limit: int = 100) -> List[Therapist]:
-    return db.query(Therapist).offset(skip).limit(limit).all()
+def get_therapists(db: Session, skip: int = 0) -> List[Therapist]:
+    return db.query(Therapist).offset(skip).all()
 
 def create_therapist(db: Session, therapist: TherapistCreate) -> Therapist:
     db_therapist = Therapist(**therapist.model_dump(exclude_unset=True))

@@ -19,7 +19,6 @@ def test_multi_criteria():
         results = search_service.search_therapists(
             db=db,
             query=test_query,
-            limit=5
         )
         
         logger.info(f"Found {len(results)} results:")
@@ -45,7 +44,6 @@ def test_multi_criteria():
             results = search_service.search_therapists(
                 db=db,
                 query=query,
-                limit=3
             )
             
             logger.info(f"Found {len(results)} results:")

@@ -18,7 +18,7 @@ def test_search():
         print(f"\nTesting query: {query}")
         response = requests.post(
             url,
-            json={"query": query, "limit": 3}
+            json={"query": query}
         )
         
         if response.status_code == 200:

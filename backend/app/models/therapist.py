@@ -27,6 +27,9 @@ class Therapist(Base):
     other_techniques = Column(ARRAY(String), nullable=True)
     other_issues = Column(ARRAY(String), nullable=True)
     url = Column(String, nullable=True)
+    image = Column(String, nullable=True)
+    telehealth = Column(Boolean, nullable=True)
+    in_person = Column(Boolean, nullable=True)
     embedding = Column(ARRAY(Float), nullable=True)
 
     def __init__(self, **kwargs):

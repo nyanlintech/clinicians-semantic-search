@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from pathlib import Path
 
 # -------------- Set up --------------
 def get_headless_driver():
@@ -81,6 +82,9 @@ def get_profile_details(driver, url):
         title = get_selector_value(driver, '.info-title')
         credentials = get_selector_value(driver, '.info-credentials')
         status = get_selector_value(driver, '.pill__status')
+
+        # Image
+        image = get_selector_value(driver, '.profile-avatar img', 'src')
 
         # Glance Stats
         glance_stats = get_selector_value(driver, '.glance-stats').lower()
@@ -178,7 +182,8 @@ def get_profile_details(driver, url):
             'specialities': specialities,
             'other_techniques': other_techniques,
             'other_issues': other_issues,
-            'url': url
+            'url': url,
+            'image': image
         }
 
         return providerInfo
@@ -205,10 +210,14 @@ def get_providers(driver):
     for card in cards:
         try:
             url = get_selector_value(card, '.searchCard__avatar a', 'href')
+            telehealth = element_exists(card, '.televisitsIcon');
+            inPerson = element_exists(card, '.inpersonIcon');
 
             providerInfo = {
                 'profile_fetched': False,
-                'url': url
+                'url': url,
+                'telehealth': telehealth,
+                'in_person': inPerson
             }
             providers.append(providerInfo)
 
@@ -221,19 +230,26 @@ def get_providers(driver):
 
 # -------------- Main Scraper --------------
 def scraper():
-    DATA_FILE = 'providers.json'
-    ERROR_FILE = 'failed_batches.json'
+    # Get the data directory path
+    backend_dir = Path(__file__).parent.parent.parent
+    data_dir = backend_dir / "data"
+    
+    # Ensure data directory exists
+    data_dir.mkdir(exist_ok=True)
+    
+    DATA_FILE = data_dir / 'providers.json'
+    ERROR_FILE = data_dir / 'failed_batches.json'
     BATCH_SIZE = 20
 
     providers = []
     failed_batches = []
 
-    if os.path.exists(ERROR_FILE):
+    if ERROR_FILE.exists():
         with open(ERROR_FILE, 'r') as f:
             failed_batches = json.load(f)
             print(f"Found {len(failed_batches)} failed batches to retry")
 
-    if os.path.exists(DATA_FILE):
+    if DATA_FILE.exists():
         with open(DATA_FILE, 'r') as f:
             providers = json.load(f)
             print(f"Loaded {len(providers)} providers from file.")

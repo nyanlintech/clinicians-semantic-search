@@ -13,7 +13,6 @@ const api = axios.create({
 export const searchTherapists = async (query: SearchQuery): Promise<Therapist[]> => {
     const requestBody = {
         criteria: query.criteria,
-        limit: query.limit,
         insurance: query.insurance || [],
         titles: query.titles || []
     };
