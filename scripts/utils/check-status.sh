@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "🔍 Checking system status..."
+echo "Checking system status..."
 
-echo "1️⃣ Checking backend..."
+echo "1. Checking backend..."
 if curl -s http://localhost:8000/health > /dev/null; then
     echo "✅ Backend is running"
 else
@@ -9,7 +9,7 @@ else
 fi
 
 echo ""
-echo "2️⃣ Checking frontend..."
+echo "2. Checking frontend..."
 if curl -s http://localhost:5173 > /dev/null; then
     echo "✅ Frontend is running"
 else
@@ -17,8 +17,11 @@ else
 fi
 
 echo ""
-echo "3️⃣ Checking database connection..."
-cd backend
+echo "3. Checking database connection..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+cd "$PROJECT_ROOT/backend"
 source .venv/bin/activate
 python -c "
 import os

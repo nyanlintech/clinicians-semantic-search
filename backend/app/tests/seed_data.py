@@ -34,7 +34,10 @@ def seed_test_data():
                 },
                 other_techniques=["EMDR", "Mindfulness", "Somatic Therapy"],
                 other_issues=["Life Transitions", "Relationship Issues"],
-                url="https://example.com/sarah-johnson"
+                url="https://example.com/sarah-johnson",
+                image="https://example.com/sarah-johnson.jpg",
+                telehealth=True,
+                in_person=True
             ),
             Therapist(
                 name="Michael Chen",
@@ -60,7 +63,10 @@ def seed_test_data():
                 },
                 other_techniques=["CBT", "DBT Skills", "Solution-Focused Therapy"],
                 other_issues=["Academic Stress", "Career Development"],
-                url="https://example.com/michael-chen"
+                url="https://example.com/michael-chen",
+                image="https://example.com/michael-chen.jpg",
+                telehealth=True,
+                in_person=False
             ),
             Therapist(
                 name="Dr. Maria Rodriguez",
@@ -86,7 +92,10 @@ def seed_test_data():
                 },
                 other_techniques=["Family Systems Therapy", "Cultural Counseling"],
                 other_issues=["Cultural Identity", "Family Dynamics"],
-                url="https://example.com/maria-rodriguez"
+                url="https://example.com/maria-rodriguez",
+                image="https://example.com/maria-rodriguez.jpg",
+                telehealth=False,
+                in_person=True
             )
         ]
 

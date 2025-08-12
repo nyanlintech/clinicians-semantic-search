@@ -27,6 +27,9 @@ class TherapistInput(BaseModel):
     other_techniques: list[str] | None = None
     other_issues: list[str] | None = None
     url: str | None = None
+    image: str | None = None
+    telehealth: bool | None = None
+    in_person: bool | None = None
 
 def embed_and_store_therapists(filepath: str):
     with open(filepath, "r") as f:

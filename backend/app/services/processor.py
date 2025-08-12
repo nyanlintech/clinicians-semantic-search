@@ -100,6 +100,9 @@ class TherapistProcessor:
             'specialties_summary': specialties_summary,  # String summary for embedding
             'other_techniques': TherapistProcessor.clean_list(raw_data.get('other_techniques', [])),
             'other_issues': TherapistProcessor.clean_list(raw_data.get('other_issues', [])),
-            'url': raw_data.get('url', '')
+            'url': raw_data.get('url', ''),
+            'image': raw_data.get('image', ''),
+            'telehealth': raw_data.get('telehealth', False),
+            'in_person': raw_data.get('in_person', False)
         }
         return processed

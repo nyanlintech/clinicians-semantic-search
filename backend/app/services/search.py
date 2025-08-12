@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
-from sqlalchemy import text, and_
+from sqlalchemy import text, and_, or_
 from app.models.therapist import Therapist
 from app.services.processor import TherapistProcessor
 import numpy as np
@@ -39,7 +39,7 @@ class SearchService:
             criterion_scores.append(similarity)
             
             # Consider a criterion "matched" if similarity is above threshold
-            if similarity > 0.6:  # Adjustable threshold
+            if similarity > 0.3:  # Adjustable threshold
                 matched_criteria += 1
                 total_score += similarity
             else:
@@ -194,11 +194,12 @@ class SearchService:
         self, 
         db: Session, 
         query: str, 
-        limit: int = 300,
         insurance: Optional[List[str]] = None,
-        titles: Optional[List[str]] = None
+        titles: Optional[List[str]] = None,
+        limit: int = 100,
+        min_similarity: float = 0.2
     ) -> list[dict]:
-        """Search for therapists using multi-criteria semantic similarity with optional filtering."""
+        """Search for therapists using pre-computed embeddings."""
         print(f"Search query: {query}")
         print(f"Filters - Insurance: {insurance}, Titles: {titles}")
         
@@ -212,47 +213,62 @@ class SearchService:
         if insurance:
             base_query = base_query.filter(Therapist.insurance.overlap(insurance))
         if titles:
-            base_query = base_query.filter(Therapist.title.in_(titles))
+            title_conditions = []
+            for title in titles:
+                title_conditions.append(text("title ILIKE :title"))
+            base_query = base_query.filter(or_(*title_conditions))
+            for title in titles:
+                base_query = base_query.params(title=f"%{title}%")
 
-        # Get all therapists matching the filters
-        all_therapists = base_query.all()
-        print(f"Found {len(all_therapists)} therapists after filtering")
-        
         if len(criteria) > 1:
-            print(f"Using multi-criteria scoring for {len(criteria)} criteria: {criteria}")
+            # Multi-criteria search - use vector similarity for each criterion
+            print(f"Using multi-criteria vector search for {len(criteria)} criteria: {criteria}")
             
-            # Score each therapist based on how well they match all criteria
-            scored_therapists = []
+            # Generate embedding for the combined query
+            combined_query = " AND ".join(criteria)
+            query_embedding = self.generate_embedding(combined_query)
             
-            for therapist in all_therapists:
-                score, matched_count = self.calculate_multi_criteria_score(therapist, criteria)
-                scored_therapists.append((therapist, score, matched_count))
+            # Use vector similarity search with LIMIT and similarity filtering
+            results = base_query.order_by(
+                text("embedding::vector <=> cast(:query_embedding as vector)")
+            ).params(query_embedding=query_embedding).limit(limit * 2).all()  # Get more to filter by similarity
             
-            # Sort by score (highest first), then by matched criteria count
-            scored_therapists.sort(key=lambda x: (x[1], x[2]), reverse=True)
+            # Filter by similarity threshold
+            filtered_results = []
+            for therapist in results:
+                if therapist.embedding:
+                    similarity = self._cosine_similarity(query_embedding, therapist.embedding)
+                    if similarity >= min_similarity:
+                        filtered_results.append(therapist)
+                        if len(filtered_results) >= limit:
+                            break
             
-            # Take top results
-            results = [therapist for therapist, score, matched_count in scored_therapists[:limit]]
+            results = filtered_results[:limit]
             
-            # Print top scores for debugging
-            print("Top 5 results:")
-            for i, (therapist, score, matched_count) in enumerate(scored_therapists[:5]):
-                print(f"{i+1}. {therapist.name}: score={score:.4f}, matched={matched_count}/{len(criteria)}")
-        
         else:
-            # Single criterion - use original vector search
+            # Single criterion - use vector search
             print("Using single criterion vector search")
             query_embedding = self.generate_embedding(query)
             
+            # Use vector similarity search with LIMIT and similarity filtering
             results = base_query.order_by(
                 text("embedding::vector <=> cast(:query_embedding as vector)")
-            ).params(query_embedding=query_embedding).limit(limit).all()
+            ).params(query_embedding=query_embedding).limit(limit * 2).all()  # Get more to filter by similarity
+            
+            # Filter by similarity threshold
+            filtered_results = []
+            for therapist in results:
+                if therapist.embedding:
+                    similarity = self._cosine_similarity(query_embedding, therapist.embedding)
+                    if similarity >= min_similarity:
+                        filtered_results.append(therapist)
+                        if len(filtered_results) >= limit:
+                            break
+            
+            results = filtered_results[:limit]
         
-        print(f"Returning {len(results)} results")
-
-        # Transform the results to match the API response format
+        print(f"Returning {len(results)} results (filtered by similarity >= {min_similarity})")
         transformed_results = [self.transform_therapist_data(therapist) for therapist in results]
-        
         return transformed_results
 
     def update_therapist_embedding(self, db: Session, therapist: Therapist) -> None:

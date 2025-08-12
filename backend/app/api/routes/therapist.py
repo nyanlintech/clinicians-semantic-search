@@ -19,7 +19,8 @@ def get_db():
 class SearchQuery(BaseModel):
     query: Optional[str] = None  # For backward compatibility
     criteria: Optional[List[str]] = None  # New multi-criteria support
-    limit: int = 10
+    limit: int = 500  # Reduced default limit
+    min_similarity: float = 0.2  # Add similarity threshold
     insurance: Optional[List[str]] = None
     titles: Optional[List[str]] = None
 
@@ -51,6 +52,9 @@ class TherapistResponse(BaseModel):
     other_techniques: List[str] | None
     other_issues: List[str] | None
     url: str | None
+    image: str | None = None
+    telehealth: bool | None = None
+    in_person: bool | None = None
 
     class Config:
         from_attributes = True
@@ -104,12 +108,13 @@ async def search_therapists(
         results = search_service.search_therapists(
             db=db,
             query=query,
-            limit=search_query.limit,
             insurance=insurance,
-            titles=titles
+            titles=titles,
+            limit=search_query.limit,
+            min_similarity=search_query.min_similarity
         )
-        print(f"Search returned {len(results)} results")
+        print(f"Search returned {len(results)} results (limit: {search_query.limit}, min_similarity: {search_query.min_similarity})")
         return results
     except Exception as e:
         print(f"Error in search_therapists: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

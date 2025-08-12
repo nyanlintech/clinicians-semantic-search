@@ -33,12 +33,13 @@ export interface Therapist {
     image?: string;
     location?: string;
     accepting_clients?: boolean;
+    telehealth?: boolean;
+    in_person?: boolean;
 }
 
 export interface SearchQuery {
     query?: string;  // For backward compatibility
     criteria?: string[];  // New multi-criteria support
-    limit?: number;
     insurance?: string[];
     titles?: string[];
 }

@@ -45,7 +45,6 @@ def test_vector_search():
                     1 - (embedding <=> :embedding) as similarity
                 FROM therapists
                 ORDER BY embedding <=> :embedding
-                LIMIT 5
                 """),
                 {"embedding": query_embedding_list}
             ).fetchall()
