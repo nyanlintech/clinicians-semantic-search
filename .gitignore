@@ -2,3 +2,12 @@
 .venv
 .env
 __pycache__/
+.vscode/
+
+node_modules/
+
+dist/
+build/
+*.log
+*.tmp
+.DS_Store
