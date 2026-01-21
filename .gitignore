@@ -1,13 +1,82 @@
-/data
-.venv
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Python
+.venv/
+venv/
+env/
+ENV/
 __pycache__/
-.vscode/
-
-node_modules/
-
-dist/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
-*.log
-*.tmp
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.vimrc
+*.sublime-project
+*.sublime-workspace
+
+# IDE settings
+.vscode/settings.json
+
+# Node
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+/frontend/dist/
+/frontend/build/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.logs
+**/logs/*
+
+# Temp files
+*.tmp
+*.temp
+*~
+
+# Data files (not for public repo)
+/backend/data/
+/data/
+
+# Database
+*.sqlite
+*.db
+*.sqlite3
+
+# IDE specific
+.pylintrc
+.mypy_cache/
+.dmypy.json
+dmypy.json
