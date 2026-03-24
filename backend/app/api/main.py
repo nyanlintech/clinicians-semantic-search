@@ -1,12 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import search, therapist
-from app.core.config import settings
+from app.api.routes import therapists
 
 api_router = APIRouter()
-api_router.include_router(search.router)
-api_router.include_router(therapist.router)
-
-
-if settings.ENVIRONMENT == "local":
-    api_router.include_router(private.router)
+api_router.include_router(therapists.router)

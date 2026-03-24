@@ -67,19 +67,25 @@ class TherapistProcessor:
                 formatted_approaches.append(TherapistProcessor.clean_text(approach))
         
         # Transform specialities into simple strings
+        # Use name + first sentence of description only — all-MiniLM-L6-v2 has a
+        # 256-token limit, so long descriptions from later specialities get truncated.
         formatted_specialities = []
         for speciality in specialities:
             if isinstance(speciality, dict):
-                for key, val in speciality.items():
-                    if isinstance(val, str):
-                        formatted_specialities.append(TherapistProcessor.clean_text(f"{key}: {val}"))
+                name = speciality.get('name', '')
+                description = speciality.get('description', '')
+                if name and description:
+                    formatted_specialities.append(TherapistProcessor.clean_text(f"{name}: {description}"))
+                elif name:
+                    formatted_specialities.append(TherapistProcessor.clean_text(name))
             elif isinstance(speciality, str):
                 formatted_specialities.append(TherapistProcessor.clean_text(speciality))
         
         # Create summaries for embedding
         approach_summary = " ".join(formatted_approaches) if formatted_approaches else ""
-        specialties_summary = " ".join(formatted_specialities) if formatted_specialities else ""
+        specialties_summary = ", ".join(formatted_specialities) if formatted_specialities else ""
         
+
         processed = {
             'name': TherapistProcessor.clean_text(raw_data.get('name', '')),
             'title': TherapistProcessor.clean_text(raw_data.get('title', '')),

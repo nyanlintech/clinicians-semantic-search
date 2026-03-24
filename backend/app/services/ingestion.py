@@ -1,6 +1,6 @@
 from typing import List, Dict
 from sqlalchemy.orm import Session
-from app.models.therapist import Therapist
+from app.models import Therapist
 from app.services.processor import TherapistProcessor
 from app.services.embedding import EmbeddingService
 import logging
