@@ -1,11 +1,16 @@
-from sentence_transformers import SentenceTransformer
-from sqlalchemy.orm import Session
-from sqlalchemy import text, and_, or_
-from app.models.therapist import Therapist
-from app.services.processor import TherapistProcessor
-import numpy as np
-from typing import List, Optional
+import logging
 import re
+from typing import List, Optional
+
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from sqlalchemy import text, and_, or_
+from sqlalchemy.orm import Session
+
+from app.models import Therapist
+from app.services.processor import TherapistProcessor
+
+logger = logging.getLogger(__name__)
 
 class SearchService:
     def __init__(self):
@@ -149,7 +154,7 @@ class SearchService:
         if len(criteria) <= 1:
             criteria = [query.strip()]
         
-        print(f"Parsed criteria from '{query}': {criteria}")
+        logger.debug("Parsed criteria from '%s': %s", query, criteria)
         return criteria
 
     def transform_therapist_data(self, therapist: Therapist) -> dict:
@@ -191,17 +196,16 @@ class SearchService:
         return data
 
     def search_therapists(
-        self, 
-        db: Session, 
-        query: str, 
+        self,
+        db: Session,
+        query: str,
         insurance: Optional[List[str]] = None,
         titles: Optional[List[str]] = None,
         limit: int = 100,
         min_similarity: float = 0.2
     ) -> list[dict]:
         """Search for therapists using pre-computed embeddings."""
-        print(f"Search query: {query}")
-        print(f"Filters - Insurance: {insurance}, Titles: {titles}")
+        logger.info("Search query: %s | insurance: %s | titles: %s", query, insurance, titles)
         
         # Parse multiple criteria from the query
         criteria = self.parse_criteria_from_query(query)
@@ -213,16 +217,11 @@ class SearchService:
         if insurance:
             base_query = base_query.filter(Therapist.insurance.overlap(insurance))
         if titles:
-            title_conditions = []
-            for title in titles:
-                title_conditions.append(text("title ILIKE :title"))
+            title_conditions = [Therapist.title.ilike(f"%{title}%") for title in titles]
             base_query = base_query.filter(or_(*title_conditions))
-            for title in titles:
-                base_query = base_query.params(title=f"%{title}%")
 
         if len(criteria) > 1:
-            # Multi-criteria search - use vector similarity for each criterion
-            print(f"Using multi-criteria vector search for {len(criteria)} criteria: {criteria}")
+            logger.debug("Using multi-criteria vector search for %d criteria: %s", len(criteria), criteria)
             
             # Generate embedding for the combined query
             combined_query = " AND ".join(criteria)
@@ -246,8 +245,7 @@ class SearchService:
             results = filtered_results[:limit]
             
         else:
-            # Single criterion - use vector search
-            print("Using single criterion vector search")
+            logger.debug("Using single criterion vector search")
             query_embedding = self.generate_embedding(query)
             
             # Use vector similarity search with LIMIT and similarity filtering
@@ -267,7 +265,7 @@ class SearchService:
             
             results = filtered_results[:limit]
         
-        print(f"Returning {len(results)} results (filtered by similarity >= {min_similarity})")
+        logger.info("Returning %d results (filtered by similarity >= %.2f)", len(results), min_similarity)
         transformed_results = [self.transform_therapist_data(therapist) for therapist in results]
         return transformed_results
 
@@ -323,17 +321,9 @@ class SearchService:
         # Combine all parts into a single text
         profile_text = " ".join(profile_parts)
         
-        # Print the combined text for reference
-        print("\n=== Therapist Profile Text ===")
-        print(f"Name: {therapist.name}")
-        print(f"Title: {therapist.title}")
-        print("\nCombined Text:")
-        print("-" * 50)
-        print(profile_text)
-        print("-" * 50)
-        print(f"Text length: {len(profile_text)} characters")
-        print("=" * 50 + "\n")
-        
+        logger.debug("Updating embedding for %s (%s), profile length: %d chars",
+                     therapist.name, therapist.title, len(profile_text))
+
         # Generate and update embedding
         embedding = self.generate_embedding(profile_text)
         therapist.embedding = embedding

@@ -1,21 +1,23 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import therapist
-from app.db.session import SessionLocal
+from app.api.main import api_router
+from app.core.config import settings
+from app.core.db import SessionLocal
 from app.services.scheduler import SchedulerService
 
-@asynccontextmanager
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     db = SessionLocal()
     scheduler = SchedulerService(db)
     scheduler.start()
-    
+
     yield
-    
+
     scheduler.stop()
     db.close()
+
 
 app = FastAPI(
     title="Therapist Semantic Search API",
@@ -27,18 +29,20 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend Vite dev server
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(therapist.router, prefix="/api/v1", tags=["therapists"])
+app.include_router(api_router, prefix=settings.API_V1_STR, tags=["therapists"])
+
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to Therapist Semantic Search API"}
+
 
 @app.get("/health")
 async def health_check():

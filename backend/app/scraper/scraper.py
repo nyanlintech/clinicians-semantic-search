@@ -194,7 +194,7 @@ def get_profile_details(driver, url):
 
 # -------------- Get All Providers --------------
 def get_providers(driver):
-    driver.get('https://www.portlandtherapycenter.com/therapists?zip=')
+    driver.get('https://www.portlandtherapycenter.com/therapists')
 
     try:
         WebDriverWait(driver, 40).until(
