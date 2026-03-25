@@ -121,6 +121,12 @@ a:hover {
 
 .result-card {
   animation: fadeUp 0.3s ease both;
+  transition: box-shadow 0.22s ease, transform 0.22s ease !important;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover) !important;
 }
 
 .result-card:nth-child(1)  { animation-delay: 0ms; }
