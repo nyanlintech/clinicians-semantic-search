@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -7,6 +8,7 @@ import {
   IconButton,
   Button,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import { BookmarkBorder, Bookmark, Launch, VideocamOutlined, PersonOutlined } from '@mui/icons-material';
 import type { Therapist } from '../types/therapist';
@@ -42,6 +44,64 @@ const chipStyles = {
   },
 };
 
+// Collapsible chip group: shows first N chips then "+X more"
+const CHIP_LIMIT = 5;
+const ChipGroup = ({ items, style }: { items: string[]; style: React.CSSProperties }) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, CHIP_LIMIT);
+  const overflow = items.length - CHIP_LIMIT;
+
+  return (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+      {visible.filter(Boolean).map(item => (
+        <Chip key={item} label={item} size="small" sx={style} />
+      ))}
+      {!expanded && overflow > 0 && (
+        <Box
+          onClick={() => setExpanded(true)}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            px: 1,
+            py: 0.375,
+            borderRadius: 20,
+            fontSize: '0.6875rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            bgcolor: 'rgba(26, 18, 8, 0.05)',
+            color: 'text.secondary',
+            border: '1px solid rgba(26, 18, 8, 0.12)',
+            userSelect: 'none',
+            '&:hover': { bgcolor: 'rgba(26, 18, 8, 0.09)' },
+          }}
+        >
+          +{overflow} more
+        </Box>
+      )}
+      {expanded && overflow > 0 && (
+        <Box
+          onClick={() => setExpanded(false)}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            px: 1,
+            py: 0.375,
+            borderRadius: 20,
+            fontSize: '0.6875rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            color: 'text.secondary',
+            userSelect: 'none',
+            '&:hover': { color: 'text.primary' },
+          }}
+        >
+          Show less
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 // Initials avatar when no image is available
 const InitialsAvatar = ({ name }: { name: string }) => {
   const initials = name
@@ -51,23 +111,22 @@ const InitialsAvatar = ({ name }: { name: string }) => {
     .join('')
     .toUpperCase();
 
-  const hue = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
-
   return (
     <Box
       sx={{
-        width: 88,
-        height: 88,
+        width: 96,
+        height: 96,
         borderRadius: 2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: `hsl(${hue}, 28%, 82%)`,
+        background: 'rgba(37, 61, 46, 0.08)',
+        border: '1px solid rgba(37, 61, 46, 0.15)',
         fontFamily: '"Cormorant Garamond", serif',
         fontWeight: 600,
-        fontSize: '1.5rem',
-        color: `hsl(${hue}, 35%, 28%)`,
+        fontSize: '1.625rem',
+        color: '#253D2E',
         letterSpacing: '0.03em',
         userSelect: 'none',
       }}
@@ -79,6 +138,8 @@ const InitialsAvatar = ({ name }: { name: string }) => {
 
 export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index = 0 }: TherapistCardProps) => {
   const delay = Math.min(index * 50, 300);
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const isNotAccepting = therapist.accepting_clients === false;
 
   return (
     <Card
@@ -87,11 +148,19 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
         width: '100%',
         bgcolor: 'background.paper',
         animationDelay: `${delay}ms`,
+        // Top accent gradient stripe (forest → clay)
+        borderTop: '3px solid transparent',
+        backgroundImage:
+          'linear-gradient(white, white), linear-gradient(90deg, #253D2E 0%, #3D6B4F 60%, #B5622D 100%)',
+        backgroundOrigin: 'border-box',
+        backgroundClip: 'padding-box, border-box',
+        // Muted opacity for "not accepting" therapists
+        opacity: isNotAccepting ? 0.82 : 1,
       }}
     >
       <CardContent sx={{ p: { xs: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2.5, md: 3 } } }}>
-        {/* Header: photo + identity + save button */}
-        <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5 }}>
+        {/* ── Header: photo + identity + rate pill + save button ── */}
+        <Box sx={{ display: 'flex', gap: 2.5, mb: 2 }}>
           {/* Photo or initials */}
           <Box sx={{ flexShrink: 0 }}>
             {therapist.image ? (
@@ -100,12 +169,12 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                 src={therapist.image}
                 alt={therapist.name}
                 sx={{
-                  width: 88,
-                  height: 88,
+                  width: 96,
+                  height: 96,
                   borderRadius: 2,
                   objectFit: 'cover',
                   display: 'block',
-                  border: '1px solid rgba(221, 213, 200, 0.5)',
+                  border: '1px solid rgba(221, 213, 200, 0.6)',
                 }}
               />
             ) : (
@@ -113,10 +182,10 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
             )}
           </Box>
 
-          {/* Name, title, credentials */}
+          {/* Name, title, credentials, rate */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
-              <Box>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography
                   sx={{
                     fontFamily: '"Cormorant Garamond", serif',
@@ -141,10 +210,36 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                 {therapist.credentials && (
                   <Typography
                     variant="caption"
-                    sx={{ color: 'text.secondary', display: 'block' }}
+                    sx={{ color: 'text.secondary', display: 'block', mb: 0.75 }}
                   >
                     {therapist.credentials}
                   </Typography>
+                )}
+                {/* Rate pill — featured near name */}
+                {therapist.rate_min && therapist.rate_max && (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 1.25,
+                      py: 0.375,
+                      borderRadius: 20,
+                      bgcolor: 'rgba(37, 61, 46, 0.07)',
+                      border: '1px solid rgba(37, 61, 46, 0.15)',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: '"IBM Plex Mono", monospace',
+                        fontSize: '0.6875rem',
+                        fontWeight: 500,
+                        color: '#253D2E',
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {therapist.rate_min}–{therapist.rate_max} / session
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
@@ -222,7 +317,7 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                   In-Person
                 </Box>
               )}
-              {therapist.accepting_clients === false && (
+              {isNotAccepting && (
                 <Box
                   sx={{
                     display: 'inline-flex',
@@ -231,12 +326,12 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     py: 0.375,
                     borderRadius: 20,
                     fontSize: '0.6875rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    bgcolor: 'rgba(168, 48, 48, 0.07)',
+                    bgcolor: 'rgba(168, 48, 48, 0.12)',
                     color: '#8A2828',
-                    border: '1px solid rgba(168, 48, 48, 0.15)',
+                    border: '1px solid rgba(168, 48, 48, 0.25)',
                   }}
                 >
                   Not accepting
@@ -266,42 +361,48 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
           </Box>
         </Box>
 
-        {/* Bio */}
-        {therapist.intro && (
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.primary',
-              lineHeight: 1.7,
-              mb: 2.5,
-              fontSize: '0.9rem',
-            }}
-          >
-            {therapist.intro}
-          </Typography>
-        )}
+        <Divider sx={{ mb: 2, borderColor: 'grey.100' }} />
 
-        {/* Details grid */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2.5 }}>
-          {/* Rate */}
-          {therapist.rate_min && therapist.rate_max && (
-            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80 }}>
-                Rate
-              </Typography>
-              <Typography
+        {/* ── Bio with truncation ── */}
+        {therapist.intro && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'text.primary',
+                lineHeight: 1.7,
+                fontSize: '0.9rem',
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: bioExpanded ? 'unset' : 4,
+                overflow: 'hidden',
+              }}
+            >
+              {therapist.intro}
+            </Typography>
+            {therapist.intro.length > 300 && (
+              <Button
+                onClick={() => setBioExpanded(prev => !prev)}
+                variant="text"
+                size="small"
                 sx={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  fontFamily: '"IBM Plex Mono", monospace',
+                  mt: 0.5,
+                  px: 0,
+                  minWidth: 0,
+                  fontSize: '0.8125rem',
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                  '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
                 }}
               >
-                {therapist.rate_min} – {therapist.rate_max}
-              </Typography>
-            </Box>
-          )}
+                {bioExpanded ? 'Show less' : 'Read more'}
+              </Button>
+            )}
+          </Box>
+        )}
 
+        {/* ── Details grid ── */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, mb: 2 }}>
           {/* Languages */}
           {therapist.languages && (
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
@@ -320,16 +421,7 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
               <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
                 Insurance
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {therapist.insurance.filter(Boolean).map(ins => (
-                  <Chip
-                    key={ins}
-                    label={ins}
-                    size="small"
-                    sx={chipStyles.insurance}
-                  />
-                ))}
-              </Box>
+              <ChipGroup items={therapist.insurance} style={chipStyles.insurance} />
             </Box>
           )}
 
@@ -339,16 +431,7 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
               <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
                 Services
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {therapist.services.map(service => (
-                  <Chip
-                    key={service}
-                    label={service}
-                    size="small"
-                    sx={chipStyles.services}
-                  />
-                ))}
-              </Box>
+              <ChipGroup items={therapist.services} style={chipStyles.services} />
             </Box>
           )}
 
@@ -358,16 +441,7 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
               <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
                 Techniques
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {therapist.other_techniques.map(technique => (
-                  <Chip
-                    key={technique}
-                    label={technique}
-                    size="small"
-                    sx={chipStyles.techniques}
-                  />
-                ))}
-              </Box>
+              <ChipGroup items={therapist.other_techniques} style={chipStyles.techniques} />
             </Box>
           )}
 
@@ -377,34 +451,24 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
               <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
                 Focuses on
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {therapist.other_issues.map(issue => (
-                  <Chip
-                    key={issue}
-                    label={issue}
-                    size="small"
-                    sx={chipStyles.issues}
-                  />
-                ))}
-              </Box>
+              <ChipGroup items={therapist.other_issues} style={chipStyles.issues} />
             </Box>
           )}
         </Box>
 
-        {/* Ideal client section */}
+        {/* ── Ideal client — left accent border ── */}
         {therapist.ideal_client && (
           <Box
             sx={{
-              bgcolor: 'grey.100',
-              border: '1px solid',
-              borderColor: 'grey.200',
-              borderRadius: 2,
+              borderLeft: '3px solid #253D2E',
+              bgcolor: 'rgba(37, 61, 46, 0.04)',
+              borderRadius: '0 8px 8px 0',
               px: 2,
               py: 1.5,
-              mb: 2.5,
+              mb: 2,
             }}
           >
-            <Typography variant="subtitle2" sx={{ mb: 0.75, color: 'text.secondary' }}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#253D2E' }}>
               Ideal Client
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.65 }}>
@@ -413,33 +477,50 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
           </Box>
         )}
 
-        {/* Approaches */}
+        {/* ── Therapeutic Approaches ── */}
         {therapist.approaches && therapist.approaches.length > 0 && (
-          <Box sx={{ mb: 2.5 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+          <Box
+            sx={{
+              borderLeft: '3px solid #B5622D',
+              bgcolor: 'rgba(181, 98, 45, 0.04)',
+              borderRadius: '0 8px 8px 0',
+              px: 2,
+              py: 1.5,
+              mb: 2,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, color: '#B5622D' }}>
               Therapeutic Approaches
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {therapist.approaches.map((approach, i) => {
                 const name = typeof approach === 'string' ? approach : approach.name;
                 return (
                   <Box
                     key={i}
                     sx={{
-                      display: 'inline-flex',
+                      display: 'flex',
                       alignItems: 'center',
-                      px: 1.25,
-                      py: 0.375,
-                      borderRadius: 4,
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      color: 'text.secondary',
-                      bgcolor: 'grey.100',
-                      border: '1px solid',
-                      borderColor: 'grey.300',
+                      gap: 1,
+                      py: 0.5,
+                      borderBottom: '1px solid rgba(26, 18, 8, 0.06)',
                     }}
                   >
-                    {name}
+                    <Box
+                      sx={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        bgcolor: '#3D6B4F',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'text.primary', lineHeight: 1.5, fontSize: '0.8375rem' }}
+                    >
+                      {name}
+                    </Typography>
                   </Box>
                 );
               })}
@@ -447,32 +528,34 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
           </Box>
         )}
 
-        {/* Footer: visit profile */}
+        {/* ── Footer ── */}
         {therapist.url && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              pt: 1,
-              borderTop: '1px solid',
-              borderColor: 'grey.200',
-            }}
-          >
-            <Button
-              href={therapist.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="outlined"
-              color="primary"
-              size="small"
-              endIcon={<Launch sx={{ fontSize: '0.875rem !important' }} />}
-              sx={{
-                fontSize: '0.8125rem',
-              }}
-            >
-              View Profile
-            </Button>
-          </Box>
+          <>
+            <Divider sx={{ mb: 1.5, borderColor: 'grey.100' }} />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                href={therapist.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="text"
+                endIcon={<Launch sx={{ fontSize: '0.875rem !important' }} />}
+                sx={{
+                  fontFamily: '"Cormorant Garamond", serif',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: 'primary.main',
+                  px: 1,
+                  letterSpacing: '0.01em',
+                  '&:hover': {
+                    bgcolor: 'rgba(37, 61, 46, 0.06)',
+                    color: 'primary.dark',
+                  },
+                }}
+              >
+                View Profile
+              </Button>
+            </Box>
+          </>
         )}
       </CardContent>
     </Card>
