@@ -2,26 +2,18 @@ import { useState } from 'react';
 import {
   Box,
   TextField,
-  Paper,
   Typography,
   Container,
   Button,
   IconButton,
-  Divider,
-  Card,
-  CardContent,
-  Alert,
-  Collapse,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import InfoIcon from '@mui/icons-material/Info';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import TuneIcon from '@mui/icons-material/Tune';
 import ClearIcon from '@mui/icons-material/Clear';
 import { useQuery } from 'react-query';
 import type { Filters } from '../types/therapist';
@@ -41,253 +33,361 @@ interface SearchInterfaceProps {
   onFilterChange: (filters: Record<string, string[]>) => void;
   selectedFilters: Record<string, string[]>;
   onClearResults: () => void;
+  hasResults: boolean;
 }
 
-export const SearchInterface = ({ onSearch, isLoading, searchResults, onFilterChange, selectedFilters, onClearResults }: SearchInterfaceProps) => {
-  const [criteria, setCriteria] = useState<SearchCriteria[]>([
-    { id: uuidv4(), query: '' },
-  ]);
-  const [showExamples, setShowExamples] = useState(false);
+const exampleSets = [
+  ['anxiety specialist', 'accepts sliding scale'],
+  ['trauma therapist', 'uses EMDR therapy'],
+  ['ADHD specialist', 'works with adults'],
+  ['couples counselor', 'accepts Kaiser insurance'],
+  ['depression', 'culturally sensitive', 'speaks Spanish'],
+];
+
+export const SearchInterface = ({
+  onSearch,
+  isLoading,
+  searchResults,
+  onFilterChange,
+  selectedFilters,
+  onClearResults,
+  hasResults,
+}: SearchInterfaceProps) => {
+  const [criteria, setCriteria] = useState<SearchCriteria[]>([{ id: uuidv4(), query: '' }]);
   const [showFilters, setShowFilters] = useState(false);
 
   useQuery<Filters>('filters', getFilters);
-
-  const exampleCriteria = [
-    ['therapist who specializes in anxiety', 'speaks Spanish'],
-    ['ADHD specialist', 'works with adults'],
-    ['trauma therapist', 'uses EMDR therapy'],
-    ['couples counselor', 'accepts Kaiser insurance'],
-    ['depression specialist', 'culturally sensitive therapist'],
-  ];
 
   const addCriteria = () => {
     setCriteria([...criteria, { id: uuidv4(), query: '' }]);
   };
 
-  const clearAllResults = () => {
-    onClearResults();
-  };
-
   const removeCriteria = (id: string) => {
-    setCriteria(criteria.filter(criterion => criterion.id !== id));
+    setCriteria(criteria.filter(c => c.id !== id));
   };
 
   const updateCriteria = (id: string, query: string) => {
-    setCriteria(
-      criteria.map(criterion =>
-        criterion.id === id ? { ...criterion, query } : criterion
-      )
-    );
+    setCriteria(criteria.map(c => (c.id === id ? { ...c, query } : c)));
   };
 
   const loadExample = (exampleSet: string[]) => {
-    const newCriteria = exampleSet.map(query => ({
-      id: uuidv4(),
-      query,
-    }));
-    setCriteria(newCriteria);
-    setShowExamples(false);
+    setCriteria(exampleSet.map(query => ({ id: uuidv4(), query })));
   };
 
   const handleSearch = () => {
-    const validCriteria = criteria
-      .map(c => c.query.trim())
-      .filter(q => q.length > 0);
-
-    if (validCriteria.length > 0) {
-      onSearch(validCriteria, [], []);
-    }
+    const valid = criteria.map(c => c.query.trim()).filter(q => q.length > 0);
+    if (valid.length > 0) onSearch(valid, [], []);
   };
 
   const handleKeyEvent = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
+    if (event.key === 'Enter') handleSearch();
   };
 
   const hasActiveFilters = Object.keys(selectedFilters).length > 0;
+  const activeFilterCount = Object.keys(selectedFilters).length;
+  const validCriteriaCount = criteria.filter(c => c.query.trim()).length;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          Find Your PDX Therapist
-        </Typography>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{ mb: 4 }}
-          align="center"
-        >
-          Add multiple criteria to find therapists that match all your specific
-          needs
-        </Typography>
-
-        {/* Examples Section */}
-        <Box sx={{ mb: 4 }}>
-          <Button
-            startIcon={<InfoIcon />}
-            onClick={() => setShowExamples(!showExamples)}
-            variant="text"
-            size="small"
+    <>
+      {/* Hero section */}
+      <Box
+        component="section"
+        sx={{
+          pt: { xs: 6, md: 10 },
+          pb: { xs: 5, md: 8 },
+          borderBottom: hasResults ? '1px solid' : 'none',
+          borderColor: 'divider',
+        }}
+      >
+        <Container maxWidth="lg">
+          {/* Eyebrow */}
+          <Typography
+            variant="overline"
+            sx={{
+              display: 'block',
+              mb: 2,
+              color: 'secondary.main',
+              letterSpacing: '0.14em',
+            }}
           >
-            {showExamples ? 'Hide Examples' : 'Show Examples'}
-          </Button>
+            Portland, Oregon · Semantic Search
+          </Typography>
 
-          <Collapse in={showExamples}>
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Example searches (click to try):
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {exampleCriteria.map((example, index) => (
-                  <Button
-                    key={`example-${index}-${example.join('-')}`}
-                    onClick={() => loadExample(example)}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      justifyContent: 'flex-start',
-                      textTransform: 'none',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    {example.join(' + ')}
-                  </Button>
-                ))}
-              </Box>
-            </Alert>
-          </Collapse>
-        </Box>
+          {/* Headline */}
+          <Typography
+            variant="h1"
+            sx={{
+              mb: 2.5,
+              maxWidth: '20ch',
+              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
+            }}
+          >
+            Find the right therapist for you
+          </Typography>
 
-        {/* Search Criteria Section */}
-        <Card variant="outlined" sx={{ mb: 4, p: 2 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                Search Criteria
-              </Typography>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={addCriteria}
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                sx={{ mr: 2 }}
-              >
-                Add Criteria
-              </Button>
-              {searchResults.length > 0 && (
-                <Button
-                  startIcon={<FilterListIcon />}
-                  onClick={() => setShowFilters(true)}
-                  variant={hasActiveFilters ? "contained" : "outlined"}
-                  size="small"
-                  disabled={isLoading}
-                  color={hasActiveFilters ? "primary" : "inherit"}
-                  sx={{ mr: 2 }}
-                >
-                  Filter Results {hasActiveFilters && `(${Object.keys(selectedFilters).length})`}
-                </Button>
-              )}
-              {searchResults.length > 0 && (
-                <Button
-                  startIcon={<ClearIcon />}
-                  onClick={clearAllResults}
-                  variant="outlined"
-                  size="small"
-                  disabled={isLoading}
-                  color="error"
-                >
-                  Clear Results
-                </Button>
-              )}
+          {/* Subheading */}
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'text.secondary',
+              mb: { xs: 4, md: 6 },
+              maxWidth: '56ch',
+              fontSize: '1rem',
+              lineHeight: 1.7,
+            }}
+          >
+            Describe what you're looking for in plain language. Add multiple criteria
+            to narrow down therapists who match all your specific needs.
+          </Typography>
+
+          {/* Search form */}
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'grey.300',
+              borderRadius: 3,
+              p: { xs: 2.5, md: 3.5 },
+              boxShadow: '0 1px 3px rgba(26, 18, 8, 0.05), 0 4px 20px rgba(26, 18, 8, 0.07)',
+              maxWidth: 740,
+            }}
+          >
+            {/* Criteria rows */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {criteria.map((criterion, index) => (
+                <Box key={criterion.id}>
+                  {index > 0 && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 1,
+                        px: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          flex: 1,
+                          height: '1px',
+                          bgcolor: 'grey.200',
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.6875rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        and
+                      </Typography>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          height: '1px',
+                          bgcolor: 'grey.200',
+                        }}
+                      />
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {/* Row label */}
+                    <Typography
+                      sx={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                        color: 'text.secondary',
+                        minWidth: 80,
+                        textAlign: 'right',
+                        flexShrink: 0,
+                        display: { xs: 'none', sm: 'block' },
+                      }}
+                    >
+                      {index === 0 ? 'looking for' : 'also'}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      value={criterion.query}
+                      onChange={e => updateCriteria(criterion.id, e.target.value)}
+                      onKeyDown={handleKeyEvent}
+                      placeholder={
+                        index === 0
+                          ? 'e.g., therapist who specializes in anxiety'
+                          : index === 1
+                          ? 'e.g., speaks Spanish or telehealth only'
+                          : 'e.g., accepts my insurance'
+                      }
+                      disabled={isLoading}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.9375rem',
+                        },
+                      }}
+                    />
+                    {criteria.length > 1 && (
+                      <IconButton
+                        onClick={() => removeCriteria(criterion.id)}
+                        disabled={isLoading}
+                        size="small"
+                        sx={{
+                          color: 'text.secondary',
+                          '&:hover': { color: 'error.main', bgcolor: 'rgba(168, 48, 48, 0.06)' },
+                          flexShrink: 0,
+                        }}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Box>
+              ))}
             </Box>
 
-            {criteria.map((criterion, index) => (
-              <Box key={criterion.id} sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ minWidth: '120px', fontWeight: 'medium' }}
-                  >
-                    {index === 0 ? 'Looking for' : 'AND also'}
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    value={criterion.query}
-                    onChange={e =>
-                      updateCriteria(criterion.id, e.target.value)
-                    }
-                    onKeyDown={handleKeyEvent}
-                    placeholder={
-                      index === 0
-                        ? 'e.g., therapist who specializes in anxiety'
-                        : index === 1
-                        ? 'e.g., speaks Spanish'
-                        : 'e.g., accepts my insurance'
-                    }
-                    disabled={isLoading}
-                  />
-                  {criteria.length > 1 && (
-                    <IconButton
-                      onClick={() => removeCriteria(criterion.id)}
-                      disabled={isLoading}
-                      color="error"
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-                {index < criteria.length - 1 && (
-                  <Divider sx={{ mt: 2, mx: 8 }} />
-                )}
-              </Box>
-            ))}
-
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            {/* Actions row */}
+            <Box
+              sx={{
+                mt: 3,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
               <Button
-                onClick={handleSearch}
-                disabled={isLoading || criteria.every(c => !c.query.trim())}
-                startIcon={<SearchIcon />}
                 variant="contained"
+                color="primary"
                 size="large"
-                sx={{ px: 4 }}
+                onClick={handleSearch}
+                disabled={isLoading || validCriteriaCount === 0}
+                sx={{ minWidth: 160 }}
               >
-                {criteria.filter(c => c.query.trim()).length > 1
-                  ? `Search with ${
-                      criteria.filter(c => c.query.trim()).length
-                    } criteria`
+                {validCriteriaCount > 1
+                  ? `Search with ${validCriteriaCount} criteria`
                   : 'Search Therapists'}
               </Button>
-            </Box>
-          </CardContent>
-        </Card>
 
-        {/* Filters Modal */}
-        <Dialog
-          open={showFilters}
-          onClose={() => setShowFilters(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Filter Results</DialogTitle>
-          <DialogContent sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-            <DynamicFilters
-              searchResults={searchResults}
-              selectedFilters={selectedFilters}
-              onFilterChange={onFilterChange}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowFilters(false)}>Close</Button>
-          </DialogActions>
-        </Dialog>
-      </Paper>
-    </Container>
+              <Button
+                variant="text"
+                startIcon={<AddIcon />}
+                onClick={addCriteria}
+                disabled={isLoading}
+                size="small"
+                sx={{ color: 'text.secondary' }}
+              >
+                Add criterion
+              </Button>
+
+              {searchResults.length > 0 && (
+                <>
+                  <Button
+                    variant={hasActiveFilters ? 'outlined' : 'text'}
+                    color={hasActiveFilters ? 'primary' : 'inherit'}
+                    startIcon={<TuneIcon />}
+                    onClick={() => setShowFilters(true)}
+                    disabled={isLoading}
+                    size="small"
+                    sx={!hasActiveFilters ? { color: 'text.secondary' } : {}}
+                  >
+                    {hasActiveFilters ? `Filters (${activeFilterCount})` : 'Filter'}
+                  </Button>
+
+                  <Button
+                    variant="text"
+                    startIcon={<ClearIcon />}
+                    onClick={onClearResults}
+                    disabled={isLoading}
+                    size="small"
+                    sx={{ color: 'text.secondary', ml: 'auto' }}
+                  >
+                    Clear
+                  </Button>
+                </>
+              )}
+            </Box>
+          </Box>
+
+          {/* Example searches */}
+          <Box sx={{ mt: 3, maxWidth: 740 }}>
+            <Typography
+              sx={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                mb: 1.5,
+              }}
+            >
+              Try an example
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {exampleSets.map((example, idx) => (
+                <Button
+                  key={idx}
+                  variant="outlined"
+                  size="small"
+                  onClick={() => loadExample(example)}
+                  disabled={isLoading}
+                  sx={{
+                    borderColor: 'grey.300',
+                    color: 'text.secondary',
+                    fontSize: '0.75rem',
+                    fontWeight: 400,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 20,
+                    whiteSpace: 'nowrap',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                      bgcolor: 'rgba(37, 61, 46, 0.04)',
+                    },
+                  }}
+                >
+                  {example.join(' · ')}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Filter dialog */}
+      <Dialog
+        open={showFilters}
+        onClose={() => setShowFilters(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Refine Results</DialogTitle>
+        <DialogContent sx={{ maxHeight: '65vh', overflow: 'auto', pt: '20px !important' }}>
+          <DynamicFilters
+            searchResults={searchResults}
+            selectedFilters={selectedFilters}
+            onFilterChange={onFilterChange}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          {hasActiveFilters && (
+            <Button
+              onClick={() => { onFilterChange({}); }}
+              size="small"
+              sx={{ color: 'text.secondary', mr: 'auto' }}
+            >
+              Clear all
+            </Button>
+          )}
+          <Button onClick={() => setShowFilters(false)} variant="contained" color="primary">
+            Done
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
-}; 
+};
