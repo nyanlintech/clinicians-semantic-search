@@ -1,46 +1,137 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --color-bg: #F5F0E8;
+  --color-bg-card: #FFFFFF;
+  --color-bg-subtle: #EDE8DF;
+  --color-forest: #253D2E;
+  --color-forest-light: #3D6B4F;
+  --color-clay: #B5622D;
+  --color-clay-light: #D4845A;
+  --color-text: #1A1208;
+  --color-text-muted: #6B5B4F;
+  --color-text-ghost: #9E9088;
+  --color-border: #DDD5C8;
+  --color-border-light: #EDE8DF;
+
+  --shadow-card: 0 1px 3px rgba(26, 18, 8, 0.05), 0 4px 20px rgba(26, 18, 8, 0.07);
+  --shadow-card-hover: 0 2px 6px rgba(26, 18, 8, 0.08), 0 8px 28px rgba(26, 18, 8, 0.11);
+  --shadow-elevated: 0 4px 12px rgba(26, 18, 8, 0.1), 0 16px 40px rgba(26, 18, 8, 0.12);
+
+  font-family: var(--font-body);
+  line-height: 1.6;
   font-weight: 400;
-  color-scheme: light dark;
-  color: #213547;
-  background-color: #ffffff;
+  color-scheme: light;
+  color: var(--color-text);
+  background-color: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 3rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   width: 100%;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: border-color 0.25s;
+/* Typography resets for MUI to inherit */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text);
+  margin: 0;
 }
 
-button:hover {
-  border-color: #646cff;
+p {
+  margin: 0;
+  font-family: var(--font-body);
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+a {
+  color: var(--color-forest);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--color-clay);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-ghost);
+}
+
+/* Result card entrance animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.result-card {
+  animation: fadeUp 0.3s ease both;
+}
+
+.result-card:nth-child(1)  { animation-delay: 0ms; }
+.result-card:nth-child(2)  { animation-delay: 50ms; }
+.result-card:nth-child(3)  { animation-delay: 100ms; }
+.result-card:nth-child(4)  { animation-delay: 150ms; }
+.result-card:nth-child(5)  { animation-delay: 200ms; }
+.result-card:nth-child(n+6) { animation-delay: 250ms; }
+
+/* Selection color */
+::selection {
+  background-color: rgba(37, 61, 46, 0.15);
+  color: var(--color-text);
 }
