@@ -50,24 +50,24 @@ python -m app.scripts.test_multi_criteria
 
 ```bash
 # Check if data exists
-psql -U nyanhtet -d therapists -c "SELECT COUNT(*) FROM therapists;"
+psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -c "SELECT COUNT(*) FROM therapists;"
 
 # Check for encoding issues
-psql -U nyanhtet -d therapists -c "SELECT name FROM therapists WHERE name LIKE '%â%' LIMIT 5;"
+psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -c "SELECT name FROM therapists WHERE name LIKE '%â%' LIMIT 5;"
 
 # Check embeddings
-psql -U nyanhtet -d therapists -c "SELECT COUNT(*) FROM therapists WHERE embedding IS NOT NULL;"
+psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -c "SELECT COUNT(*) FROM therapists WHERE embedding IS NOT NULL;"
 ```
 
 ## 📝 .env Template
 
 ```bash
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=nyanhtet
-DB_PASS=
-DB_NAME=therapists
 ENVIRONMENT=local
+LOCAL_DB_HOST=localhost
+LOCAL_DB_PORT=5432
+LOCAL_DB_USER=your_db_user
+LOCAL_DB_PASS=your_db_password
+LOCAL_DB_NAME=therapists
 ```
 
 ---

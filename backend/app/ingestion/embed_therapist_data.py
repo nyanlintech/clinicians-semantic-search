@@ -1,7 +1,7 @@
 from app.services.processor import TherapistProcessor
 from app.services.embedding import EmbeddingService
 from app.db import SessionLocal
-from app.models import Therapist
+from app.models.therapist import Therapist
 from app.api.routes.therapist import TherapistResponse, Approach, Speciality
 from pydantic import BaseModel
 import json
@@ -40,24 +40,9 @@ def embed_and_store_therapists(filepath: str):
     embedding_service = EmbeddingService()
     
     try:
-        # Log first few profiles for inspection
-        print("\n=== Sample Raw Data ===")
-        for i, profile in enumerate(scraped_profiles[:2]):  # Show first 2 profiles
-            print(f"\nProfile {i + 1}:")
-            print(f"Name: {profile.get('name', 'N/A')}")
-            print(f"Title: {profile.get('title', 'N/A')}")
-            print(f"Approaches: {profile.get('approaches', [])}")
-            print(f"Specialities: {profile.get('specialities', [])}")
-            
-            # Process the data using our standard processor
+        print(f"Processing {len(scraped_profiles)} profiles...")
+        for i, profile in enumerate(scraped_profiles):
             processed_data = processor.process_therapist_data(profile)
-            
-            print("\nProcessed Data:")
-            print(f"Approaches: {processed_data.get('approaches', [])}")
-            print(f"Specialities: {processed_data.get('specialities', [])}")
-            print("=" * 50)
-            
-            # Validate and structure the data using Pydantic model
             therapist_input = TherapistInput(**processed_data)
             
             # Generate embedding

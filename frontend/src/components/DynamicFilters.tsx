@@ -19,12 +19,14 @@ interface DynamicFiltersProps {
   searchResults: any[];
   selectedFilters: SelectedFilters;
   onFilterChange: (filters: SelectedFilters) => void;
+  compact?: boolean;
 }
 
 const DynamicFilters: React.FC<DynamicFiltersProps> = ({
   searchResults,
   selectedFilters,
   onFilterChange,
+  compact = false,
 }) => {
   const handleFilterChange = (key: string, value: string) => {
     const newValues = selectedFilters[key] ? [...selectedFilters[key]] : [];
@@ -75,6 +77,7 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
   const booleanFilters = [
     { key: 'telehealth', label: 'Telehealth' },
     { key: 'in_person', label: 'In-Person' },
+    { key: 'free_consultation', label: 'Free Consultation' },
   ];
 
   const hasActiveFilters = Object.keys(selectedFilters).length > 0;
@@ -94,12 +97,12 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
         </Box>
       )}
 
-      {listFilters.map(({ key, label }) => {
+      {listFilters.map(({ key, label }, filterIndex) => {
         const options = generateFilterOptions(searchResults, key);
         if (options.length === 0) return null;
 
         return (
-          <Accordion key={key} defaultExpanded>
+          <Accordion key={key} defaultExpanded={compact ? filterIndex === 0 : true}>
             <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
@@ -119,8 +122,8 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
                       borderRadius: '9px',
                       bgcolor: 'primary.main',
                       color: 'white',
-                      fontSize: '0.625rem',
-                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -153,10 +156,10 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: '0.6875rem',
+                            fontSize: '0.8125rem',
                             color: 'text.secondary',
                             ml: 1,
-                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontWeight: 500,
                           }}
                         >
                           {count}
@@ -183,7 +186,7 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
         if (trueCount === 0 && falseCount === 0) return null;
 
         return (
-          <Accordion key={key} defaultExpanded>
+          <Accordion key={key} defaultExpanded={!compact}>
             <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
@@ -199,8 +202,8 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
                       borderRadius: '9px',
                       bgcolor: 'primary.main',
                       color: 'white',
-                      fontSize: '0.625rem',
-                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -230,10 +233,10 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: '0.6875rem',
+                            fontSize: '0.8125rem',
                             color: 'text.secondary',
                             ml: 1,
-                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontWeight: 500,
                           }}
                         >
                           {trueCount}
@@ -264,10 +267,10 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: '0.6875rem',
+                            fontSize: '0.8125rem',
                             color: 'text.secondary',
                             ml: 1,
-                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontWeight: 500,
                           }}
                         >
                           {falseCount}

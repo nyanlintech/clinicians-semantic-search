@@ -1,9 +1,8 @@
-# backend/app/db/init_db.py
-from app.db.session import engine
+from app.db.session import SessionLocal, engine
 from app.db.base import Base  # noqa
-from app.models.therapist import Therapist
 
 def init_db():
+    import app.models.therapist  # noqa: register models with Base
     Base.metadata.create_all(bind=engine)
 
 if __name__ == "__main__":

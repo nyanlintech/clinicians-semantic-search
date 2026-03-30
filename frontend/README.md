@@ -6,16 +6,16 @@ Modern React + TypeScript frontend for the Clinicians Semantic Search applicatio
 
 ### Prerequisites
 - Node.js 18+
-- npm or yarn
+- yarn
 
 ### Setup
 
 ```bash
 # Install dependencies
-npm install
+yarn
 
 # Start development server
-npm run dev
+yarn dev
 ```
 
 The application will be available at `http://localhost:5173`
@@ -24,19 +24,16 @@ The application will be available at `http://localhost:5173`
 
 ```bash
 # Development server with hot reload
-npm run dev
+yarn dev
 
 # Build for production
-npm run build
+yarn build
 
 # Preview production build
-npm run preview
+yarn preview
 
 # Run ESLint
-npm run lint
-
-# Format code with Prettier (if configured)
-npm run format
+yarn lint
 ```
 
 ## 📁 Project Structure
@@ -59,7 +56,6 @@ src/
 ├── App.tsx             # Root component
 ├── main.tsx            # Entry point
 ├── index.css           # Global styles
-├── App.css             # App styles
 ├── theme.ts            # Theme configuration
 └── vite-env.d.ts       # Vite type definitions
 ```
@@ -68,24 +64,23 @@ src/
 
 ### SearchInterface
 Main search component that handles:
-- Query input
+- Multi-criteria query input
 - Search submission
 - Result display
 
 ### DynamicFilters
 Filtering component providing:
 - Specialty filtering
-- Location filtering
 - Insurance provider filtering
-- Custom criteria
+- Service type filtering
 
 ### TherapistCard
 Displays individual therapist information:
-- Name and specialties
-- Location
+- Name, title, and credentials
+- Bio and ideal client summary
 - Insurance accepted
+- Therapeutic approaches and specialties
 - Contact information
-- Rating (if available)
 
 ## 🔌 API Integration
 
@@ -95,11 +90,9 @@ The frontend communicates with the backend via REST API:
 // Search endpoint
 POST /api/v1/search
 {
-  "query": "therapist for anxiety",
-  "criteria": {
-    "location": "New York",
-    "insurance": "UnitedHealth"
-  }
+  "criteria": ["therapist for anxiety", "accepts Medicaid"],
+  "insurance": ["Medicaid"],
+  "titles": ["LCSW"]
 }
 
 // Get available filters
@@ -114,10 +107,9 @@ See [API Documentation](../docs/API.md) for full endpoint details.
 ## 🎯 Features
 
 - **Semantic Search** - Natural language search powered by AI embeddings
-- **Multi-Criteria Filtering** - Filter by specialty, location, insurance, and more
+- **Multi-Criteria Filtering** - Filter by specialty, insurance, service type, and more
 - **Responsive Design** - Works on desktop, tablet, and mobile
-- **Real-time Results** - Instant search results as you type
-- **Error Handling** - Graceful error messages and fallbacks
+- **Favorites** - Save and revisit therapists across sessions
 
 ## 🔧 Configuration
 
@@ -126,88 +118,56 @@ See [API Documentation](../docs/API.md) for full endpoint details.
 Create a `.env.local` file for local development:
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000/api/v1
 ```
 
-For production, create `.env.production`:
+For production:
 
 ```env
-VITE_API_URL=https://api.example.com
-```
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests in watch mode
-npm test -- --watch
-
-# Run tests with coverage
-npm test -- --coverage
+VITE_API_URL=https://your-api-domain.com/api/v1
 ```
 
 ## 🏗️ Building
 
-### Development Build
+### Development
 ```bash
-npm run dev
+yarn dev
 ```
 
-### Production Build
+### Production
 ```bash
-npm run build
+yarn build
 ```
 
 This creates an optimized build in the `dist/` directory.
 
-### Preview Production Build
-```bash
-npm run preview
-```
+### Docker
 
-## 🚀 Deployment
-
-### Static Hosting (Vercel, Netlify, AWS S3)
+A production-ready Dockerfile is included that builds the app and serves it via nginx:
 
 ```bash
-# Build the application
-npm run build
-
-# Deploy the dist/ folder to your hosting service
+docker build -t pdx-therapist-search-frontend .
+docker run -p 80:80 pdx-therapist-search-frontend
 ```
 
-### Docker (Optional)
+Or use Docker Compose from the project root:
 
-```dockerfile
-FROM node:18-alpine as build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:18-alpine
-WORKDIR /app
-RUN npm install -g serve
-COPY --from=build /app/dist ./dist
-EXPOSE 3000
-CMD ["serve", "-s", "dist", "-l", "3000"]
+```bash
+docker compose up frontend
 ```
 
 ## 🎨 Styling
 
-- **CSS Modules** - For component-specific styles
-- **Global Styles** - `index.css` for application-wide styles
-- **Theme** - Centralized theme configuration in `theme.ts`
+- **Material UI v5** - Component library with Emotion styling
+- **Custom Theme** - Forest/clay/parchment palette in `theme.ts`
+- **Google Fonts** - Cormorant Garamond (display) + DM Sans (body)
 
 ## 🔄 State Management
 
-Currently using React hooks (`useState`, `useContext`) for state management. For larger state, consider:
-- Redux
-- Zustand
-- TanStack Query (for server state)
+- React hooks (`useState`, `useRef`) for local UI state
+- React Query for server/async state
+- `localStorage` for favorites persistence
+- URL search params for shareable search links
 
 ## 📱 Browser Support
 
@@ -221,19 +181,19 @@ Currently using React hooks (`useState`, `useContext`) for state management. For
 ### Module not found errors
 ```bash
 # Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules
+yarn
 ```
 
 ### Port already in use
 ```bash
 # Use a different port
-npm run dev -- --port 3000
+yarn dev --port 3001
 ```
 
 ### API connection issues
 - Ensure backend is running on the correct port
-- Check VITE_API_URL in `.env.local`
+- Check `VITE_API_URL` in `.env.local`
 - Verify CORS settings on backend
 
 ## 📚 Resources
@@ -250,7 +210,3 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.
 ## 📝 License
 
 MIT License - see [LICENSE](../LICENSE) file for details.
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```

@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from app.api.deps import get_db
 from app.services.search import SearchService
-from app.models import Therapist
+from app.models.therapist import Therapist
 from pydantic import BaseModel, RootModel
 
 logger = logging.getLogger(__name__)

@@ -23,24 +23,32 @@ interface TherapistCardProps {
 // Category-specific chip styles for visual distinction
 const chipStyles = {
   insurance: {
-    backgroundColor: 'rgba(37, 61, 46, 0.08)',
-    color: '#1F3828',
+    backgroundColor: 'rgba(37, 61, 46, 0.07)',
+    color: '#253D2E',
     border: '1px solid rgba(37, 61, 46, 0.2)',
+    borderRadius: '4px',
+    fontSize: '0.8125rem',
   },
   techniques: {
-    backgroundColor: 'rgba(58, 82, 112, 0.08)',
-    color: '#2A3D5A',
-    border: '1px solid rgba(58, 82, 112, 0.2)',
+    backgroundColor: 'rgba(181, 98, 45, 0.08)',
+    color: '#8F4D23',
+    border: '1px solid rgba(181, 98, 45, 0.22)',
+    borderRadius: '4px',
+    fontSize: '0.8125rem',
   },
   services: {
-    backgroundColor: 'rgba(181, 98, 45, 0.08)',
-    color: '#7A4215',
-    border: '1px solid rgba(181, 98, 45, 0.2)',
+    backgroundColor: 'rgba(37, 61, 46, 0.06)',
+    color: '#3A5C47',
+    border: '1px solid rgba(37, 61, 46, 0.18)',
+    borderRadius: '4px',
+    fontSize: '0.8125rem',
   },
   issues: {
-    backgroundColor: 'rgba(90, 58, 122, 0.07)',
-    color: '#4A2870',
-    border: '1px solid rgba(90, 58, 122, 0.18)',
+    backgroundColor: 'rgba(92, 80, 69, 0.08)',
+    color: '#3D3028',
+    border: '1px solid rgba(92, 80, 69, 0.2)',
+    borderRadius: '4px',
+    fontSize: '0.8125rem',
   },
 };
 
@@ -52,7 +60,7 @@ const ChipGroup = ({ items, style }: { items: string[]; style: React.CSSProperti
   const overflow = items.length - CHIP_LIMIT;
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
       {visible.filter(Boolean).map(item => (
         <Chip key={item} label={item} size="small" sx={style} />
       ))}
@@ -62,17 +70,17 @@ const ChipGroup = ({ items, style }: { items: string[]; style: React.CSSProperti
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
-            px: 1,
-            py: 0.375,
-            borderRadius: 20,
-            fontSize: '0.6875rem',
-            fontWeight: 600,
+            px: 1.25,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
             cursor: 'pointer',
-            bgcolor: 'rgba(26, 18, 8, 0.05)',
+            bgcolor: 'rgba(26, 18, 8, 0.04)',
             color: 'text.secondary',
-            border: '1px solid rgba(26, 18, 8, 0.12)',
+            border: '1px solid rgba(26, 18, 8, 0.1)',
             userSelect: 'none',
-            '&:hover': { bgcolor: 'rgba(26, 18, 8, 0.09)' },
+            '&:hover': { bgcolor: 'rgba(26, 18, 8, 0.08)' },
           }}
         >
           +{overflow} more
@@ -84,11 +92,11 @@ const ChipGroup = ({ items, style }: { items: string[]; style: React.CSSProperti
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
-            px: 1,
-            py: 0.375,
-            borderRadius: 20,
-            fontSize: '0.6875rem',
-            fontWeight: 600,
+            px: 1.25,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
             cursor: 'pointer',
             color: 'text.secondary',
             userSelect: 'none',
@@ -114,20 +122,20 @@ const InitialsAvatar = ({ name }: { name: string }) => {
   return (
     <Box
       sx={{
-        width: 96,
-        height: 96,
-        borderRadius: 2,
+        width: 68,
+        height: 68,
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: 'rgba(37, 61, 46, 0.08)',
-        border: '1px solid rgba(37, 61, 46, 0.15)',
-        fontFamily: '"Cormorant Garamond", serif',
+        background: 'rgba(37, 61, 46, 0.09)',
+        border: '2px solid rgba(37, 61, 46, 0.15)',
+        fontFamily: '"Cormorant Garamond", Georgia, serif',
         fontWeight: 600,
-        fontSize: '1.625rem',
+        fontSize: '1.25rem',
         color: '#253D2E',
-        letterSpacing: '0.03em',
+        letterSpacing: '0.02em',
         userSelect: 'none',
       }}
     >
@@ -148,19 +156,12 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
         width: '100%',
         bgcolor: 'background.paper',
         animationDelay: `${delay}ms`,
-        // Top accent gradient stripe (forest → clay)
-        borderTop: '3px solid transparent',
-        backgroundImage:
-          'linear-gradient(white, white), linear-gradient(90deg, #253D2E 0%, #3D6B4F 60%, #B5622D 100%)',
-        backgroundOrigin: 'border-box',
-        backgroundClip: 'padding-box, border-box',
-        // Muted opacity for "not accepting" therapists
-        opacity: isNotAccepting ? 0.82 : 1,
+        opacity: isNotAccepting ? 0.75 : 1,
       }}
     >
       <CardContent sx={{ p: { xs: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2.5, md: 3 } } }}>
         {/* ── Header: photo + identity + rate pill + save button ── */}
-        <Box sx={{ display: 'flex', gap: 2.5, mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
           {/* Photo or initials */}
           <Box sx={{ flexShrink: 0 }}>
             {therapist.image ? (
@@ -169,12 +170,12 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                 src={therapist.image}
                 alt={therapist.name}
                 sx={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: 2,
+                  width: 68,
+                  height: 68,
+                  borderRadius: '50%',
                   objectFit: 'cover',
                   display: 'block',
-                  border: '1px solid rgba(221, 213, 200, 0.6)',
+                  border: '2px solid rgba(37, 61, 46, 0.15)',
                 }}
               />
             ) : (
@@ -187,13 +188,10 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
             <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography
+                  variant="h5"
                   sx={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontWeight: 600,
-                    fontSize: { xs: '1.375rem', md: '1.5rem' },
                     lineHeight: 1.2,
                     color: 'text.primary',
-                    letterSpacing: '-0.01em',
                     mb: 0.25,
                   }}
                 >
@@ -201,29 +199,39 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                 </Typography>
                 {therapist.title && (
                   <Typography
-                    variant="body2"
-                    sx={{ color: 'text.secondary', lineHeight: 1.4, mb: 0.25 }}
+                    sx={{
+                      fontSize: '0.9rem',
+                      color: 'text.secondary',
+                      lineHeight: 1.45,
+                      mb: 0.2,
+                      fontFamily: '"DM Sans", sans-serif',
+                    }}
                   >
                     {therapist.title}
                   </Typography>
                 )}
                 {therapist.credentials && (
                   <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary', display: 'block', mb: 0.75 }}
+                    sx={{
+                      fontSize: '0.8125rem',
+                      color: '#8C7D6E',
+                      display: 'block',
+                      mb: 0.75,
+                      fontFamily: '"DM Sans", sans-serif',
+                    }}
                   >
                     {therapist.credentials}
                   </Typography>
                 )}
-                {/* Rate pill — featured near name */}
+                {/* Rate pill — uses monospace for the number */}
                 {therapist.rate_min && therapist.rate_max && (
                   <Box
                     sx={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       px: 1.25,
-                      py: 0.375,
-                      borderRadius: 20,
+                      py: 0.5,
+                      borderRadius: '4px',
                       bgcolor: 'rgba(37, 61, 46, 0.07)',
                       border: '1px solid rgba(37, 61, 46, 0.15)',
                     }}
@@ -231,10 +239,10 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     <Typography
                       sx={{
                         fontFamily: '"IBM Plex Mono", monospace',
-                        fontSize: '0.6875rem',
+                        fontSize: '0.8125rem',
                         fontWeight: 500,
                         color: '#253D2E',
-                        letterSpacing: '0.02em',
+                        letterSpacing: '0',
                       }}
                     >
                       {therapist.rate_min}–{therapist.rate_max} / session
@@ -252,7 +260,7 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     color: isFavorite ? 'secondary.main' : 'text.secondary',
                     bgcolor: isFavorite ? 'rgba(181, 98, 45, 0.08)' : 'transparent',
                     border: '1px solid',
-                    borderColor: isFavorite ? 'rgba(181, 98, 45, 0.25)' : 'grey.300',
+                    borderColor: isFavorite ? 'rgba(181, 98, 45, 0.3)' : 'grey.200',
                     '&:hover': {
                       bgcolor: 'rgba(181, 98, 45, 0.1)',
                       borderColor: 'secondary.main',
@@ -281,17 +289,16 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     gap: 0.5,
                     px: 1,
                     py: 0.375,
-                    borderRadius: 20,
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    fontFamily: '"DM Sans", sans-serif',
                     bgcolor: 'rgba(37, 61, 46, 0.08)',
-                    color: '#1F3828',
-                    border: '1px solid rgba(37, 61, 46, 0.15)',
+                    color: '#253D2E',
+                    border: '1px solid rgba(37, 61, 46, 0.18)',
                   }}
                 >
-                  <VideocamOutlined sx={{ fontSize: 12 }} />
+                  <VideocamOutlined sx={{ fontSize: 13 }} />
                   Telehealth
                 </Box>
               )}
@@ -303,17 +310,16 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     gap: 0.5,
                     px: 1,
                     py: 0.375,
-                    borderRadius: 20,
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    bgcolor: 'rgba(58, 82, 112, 0.07)',
-                    color: '#2A3D5A',
-                    border: '1px solid rgba(58, 82, 112, 0.15)',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    fontFamily: '"DM Sans", sans-serif',
+                    bgcolor: 'rgba(181, 98, 45, 0.08)',
+                    color: '#8F4D23',
+                    border: '1px solid rgba(181, 98, 45, 0.18)',
                   }}
                 >
-                  <PersonOutlined sx={{ fontSize: 12 }} />
+                  <PersonOutlined sx={{ fontSize: 13 }} />
                   In-Person
                 </Box>
               )}
@@ -324,14 +330,13 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     alignItems: 'center',
                     px: 1,
                     py: 0.375,
-                    borderRadius: 20,
-                    fontSize: '0.6875rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    bgcolor: 'rgba(168, 48, 48, 0.12)',
-                    color: '#8A2828',
-                    border: '1px solid rgba(168, 48, 48, 0.25)',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    fontFamily: '"DM Sans", sans-serif',
+                    bgcolor: 'rgba(184, 50, 50, 0.08)',
+                    color: '#B83232',
+                    border: '1px solid rgba(184, 50, 50, 0.2)',
                   }}
                 >
                   Not accepting
@@ -344,14 +349,13 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                     alignItems: 'center',
                     px: 1,
                     py: 0.375,
-                    borderRadius: 20,
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    bgcolor: 'rgba(181, 98, 45, 0.08)',
-                    color: '#7A4215',
-                    border: '1px solid rgba(181, 98, 45, 0.2)',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    fontFamily: '"DM Sans", sans-serif',
+                    bgcolor: 'rgba(58, 107, 72, 0.08)',
+                    color: '#3A6B48',
+                    border: '1px solid rgba(58, 107, 72, 0.2)',
                   }}
                 >
                   Free consultation
@@ -361,17 +365,17 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
           </Box>
         </Box>
 
-        <Divider sx={{ mb: 2, borderColor: 'grey.100' }} />
+        <Divider sx={{ mb: 2.5, borderColor: '#DDD5C8' }} />
 
         {/* ── Bio with truncation ── */}
         {therapist.intro && (
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2.5 }}>
             <Typography
-              variant="body1"
               sx={{
                 color: 'text.primary',
-                lineHeight: 1.7,
-                fontSize: '0.9rem',
+                lineHeight: 1.75,
+                fontSize: '0.9375rem',
+                fontFamily: '"DM Sans", sans-serif',
                 display: '-webkit-box',
                 WebkitBoxOrient: 'vertical',
                 WebkitLineClamp: bioExpanded ? 'unset' : 4,
@@ -386,10 +390,10 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
                 variant="text"
                 size="small"
                 sx={{
-                  mt: 0.5,
+                  mt: 0.75,
                   px: 0,
                   minWidth: 0,
-                  fontSize: '0.8125rem',
+                  fontSize: '0.875rem',
                   color: 'text.secondary',
                   fontWeight: 500,
                   '&:hover': { color: 'primary.main', bgcolor: 'transparent' },
@@ -402,14 +406,17 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
         )}
 
         {/* ── Details grid ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, mb: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, mb: 2.5 }}>
           {/* Languages */}
           {therapist.languages && (
-            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80 }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'text.secondary', minWidth: 88, flexShrink: 0 }}
+              >
                 Languages
               </Typography>
-              <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>
+              <Typography sx={{ fontSize: '0.9rem', color: 'text.primary', fontFamily: '"DM Sans", sans-serif' }}>
                 {therapist.languages}
               </Typography>
             </Box>
@@ -417,8 +424,11 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
 
           {/* Insurance */}
           {therapist.insurance && therapist.insurance.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'text.secondary', minWidth: 88, flexShrink: 0, pt: 0.25 }}
+              >
                 Insurance
               </Typography>
               <ChipGroup items={therapist.insurance} style={chipStyles.insurance} />
@@ -427,8 +437,11 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
 
           {/* Services */}
           {therapist.services && therapist.services.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'text.secondary', minWidth: 88, flexShrink: 0, pt: 0.25 }}
+              >
                 Services
               </Typography>
               <ChipGroup items={therapist.services} style={chipStyles.services} />
@@ -437,8 +450,11 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
 
           {/* Techniques */}
           {therapist.other_techniques && therapist.other_techniques.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'text.secondary', minWidth: 88, flexShrink: 0, pt: 0.25 }}
+              >
                 Techniques
               </Typography>
               <ChipGroup items={therapist.other_techniques} style={chipStyles.techniques} />
@@ -447,8 +463,11 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
 
           {/* Issues */}
           {therapist.other_issues && therapist.other_issues.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80, pt: 0.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'text.secondary', minWidth: 88, flexShrink: 0, pt: 0.25 }}
+              >
                 Focuses on
               </Typography>
               <ChipGroup items={therapist.other_issues} style={chipStyles.issues} />
@@ -462,16 +481,26 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
             sx={{
               borderLeft: '3px solid #253D2E',
               bgcolor: 'rgba(37, 61, 46, 0.04)',
-              borderRadius: '0 8px 8px 0',
+              borderRadius: '0 6px 6px 0',
               px: 2,
               py: 1.5,
               mb: 2,
             }}
           >
-            <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#253D2E' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 0.75, color: '#253D2E', fontWeight: 600 }}
+            >
               Ideal Client
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.65 }}>
+            <Typography
+              sx={{
+                fontSize: '0.9rem',
+                color: 'text.primary',
+                lineHeight: 1.7,
+                fontFamily: '"DM Sans", sans-serif',
+              }}
+            >
               {therapist.ideal_client}
             </Typography>
           </Box>
@@ -481,43 +510,37 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
         {therapist.approaches && therapist.approaches.length > 0 && (
           <Box
             sx={{
-              borderLeft: '3px solid #B5622D',
-              bgcolor: 'rgba(181, 98, 45, 0.04)',
-              borderRadius: '0 8px 8px 0',
+              borderRadius: '0 6px 6px 0',
               px: 2,
               py: 1.5,
               mb: 2,
             }}
           >
-            <Typography variant="subtitle2" sx={{ mb: 1, color: '#B5622D' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 1, color: '#B5622D', fontWeight: 600 }}
+            >
               Therapeutic Approaches
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {therapist.approaches.map((approach, i) => {
+
                 const name = typeof approach === 'string' ? approach : approach.name;
                 return (
                   <Box
                     key={i}
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
                       py: 0.5,
-                      borderBottom: '1px solid rgba(26, 18, 8, 0.06)',
+                      borderBottom: '1px solid rgba(26, 18, 8, 0.05)',
                     }}
                   >
-                    <Box
-                      sx={{
-                        width: 4,
-                        height: 4,
-                        borderRadius: '50%',
-                        bgcolor: '#3D6B4F',
-                        flexShrink: 0,
-                      }}
-                    />
                     <Typography
-                      variant="body2"
-                      sx={{ color: 'text.primary', lineHeight: 1.5, fontSize: '0.8375rem' }}
+                      sx={{
+                        fontSize: '0.9rem',
+                        color: 'text.primary',
+                        lineHeight: 1.6,
+                        fontFamily: '"DM Sans", sans-serif',
+                      }}
                     >
                       {name}
                     </Typography>
@@ -531,21 +554,19 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
         {/* ── Footer ── */}
         {therapist.url && (
           <>
-            <Divider sx={{ mb: 1.5, borderColor: 'grey.100' }} />
+            <Divider sx={{ mb: 1.5, borderColor: '#DDD5C8' }} />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 href={therapist.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="text"
-                endIcon={<Launch sx={{ fontSize: '0.875rem !important' }} />}
+                endIcon={<Launch sx={{ fontSize: '0.9rem !important' }} />}
                 sx={{
-                  fontFamily: '"Cormorant Garamond", serif',
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
                   color: 'primary.main',
                   px: 1,
-                  letterSpacing: '0.01em',
                   '&:hover': {
                     bgcolor: 'rgba(37, 61, 46, 0.06)',
                     color: 'primary.dark',
