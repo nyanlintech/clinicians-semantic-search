@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 
-from app.models import Therapist
+from app.models.therapist import Therapist
 from app.services.processor import TherapistProcessor
 
 logger = logging.getLogger(__name__)

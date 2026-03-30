@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from app.models import Therapist
+from app.models.therapist import Therapist
 from app.schemas import TherapistCreate
 
 

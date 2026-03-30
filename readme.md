@@ -43,7 +43,7 @@ clinicians-semantic-search/
 ### Backend
 - **Framework:** FastAPI
 - **Database:** PostgreSQL with pgvector
-- **Embeddings:** OpenAI or similar
+- **Embeddings:** Sentence Transformers (all-MiniLM-L6-v2)
 - **ORM:** SQLAlchemy
 - **Language:** Python 3.10+
 
@@ -51,12 +51,13 @@ clinicians-semantic-search/
 - **Framework:** React 18
 - **Language:** TypeScript
 - **Build Tool:** Vite
-- **Styling:** CSS
+- **Styling:** Material UI v5 (MUI) with Emotion
 
 ## 📋 Prerequisites
 
-- Python 3.10+
-- Node.js 18+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- Node.js 18+ with [yarn](https://yarnpkg.com/)
 - PostgreSQL 14+ with pgvector extension
 - Git
 
@@ -68,16 +69,12 @@ clinicians-semantic-search/
 # Navigate to backend directory
 cd backend
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
 # Copy environment template
 cp .env.example .env
 # Edit .env with your database credentials
 
-# Install dependencies
-pip install -e .
+# Install dependencies (uses uv — install from https://docs.astral.sh/uv/)
+uv sync
 
 # Initialize database
 python -c "from app.db.init_db import init_db; init_db()"
@@ -95,10 +92,10 @@ Backend runs on `http://localhost:8000`
 cd frontend
 
 # Install dependencies
-npm install
+yarn
 
 # Start development server
-npm run dev
+yarn dev
 ```
 
 Frontend runs on `http://localhost:5173`
@@ -131,16 +128,16 @@ This project is licensed under the [MIT License](LICENSE).
 
 ```bash
 # Backend
-cd backend && source .venv/bin/activate
-uvicorn app.main:app --reload      # Start dev server
-pytest                              # Run tests
-python -m app.scripts.test_search   # Test search functionality
+cd backend
+uv run uvicorn app.main:app --reload  # Start dev server
+uv run pytest                         # Run tests
+uv run python -m app.scripts.test_search  # Test search functionality
 
 # Frontend
 cd frontend
-npm run dev                         # Start dev server
-npm run build                       # Build for production
-npm run lint                        # Run linter
+yarn dev                            # Start dev server
+yarn build                          # Build for production
+yarn lint                           # Run linter
 ```
 
 ## 🐛 Troubleshooting

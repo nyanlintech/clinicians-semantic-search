@@ -97,8 +97,8 @@ python -c "from app.db.init_db import init_db; init_db()"
 
 # Frontend (in new terminal)
 cd frontend
-npm install
-npm run dev
+yarn install
+yarn run dev
 ```
 
 ### 2. Daily Development
@@ -110,7 +110,7 @@ uvicorn app.main:app --reload
 
 # Terminal 2 - Frontend
 cd frontend
-npm run dev
+yarn run dev
 ```
 
 ### 3. Running Tests
@@ -122,7 +122,7 @@ pytest
 
 # Frontend tests
 cd frontend
-npm test
+yarn test
 ```
 
 ## 🚀 Deployment
