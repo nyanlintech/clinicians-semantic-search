@@ -25,6 +25,10 @@ dependencies = [
   "torch>=2.0.0",
   "transformers>=4.30.0",
   "pgvector>=0.2.0",
+]
+
+[project.optional-dependencies]
+ingestion = [
   "APScheduler>=3.10.0",
   "click>=8.1.0",
   "beautifulsoup4>=4.12.0",

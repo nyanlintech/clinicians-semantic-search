@@ -6,5 +6,13 @@ __pycache__
 .mypy_cache
 .ruff_cache
 .env
-data/
+.env.*
+.claude/
+.coverage
 .DS_Store
+README.md
+QUICK_START.md
+FLY_DEPLOY.md
+tests/
+app/tests/
+data/

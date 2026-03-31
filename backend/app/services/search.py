@@ -1,11 +1,13 @@
 import logging
 import re
+from threading import Lock
 from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.therapist import Therapist
 from app.services.processor import TherapistProcessor
 
@@ -17,14 +19,22 @@ if TYPE_CHECKING:
 class SearchService:
     def __init__(self):
         self._model: "SentenceTransformer | None" = None
+        self._model_lock = Lock()
         self.processor = TherapistProcessor()
 
     @property
     def model(self) -> "SentenceTransformer":
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer("all-MiniLM-L6-v2")
+            with self._model_lock:
+                if self._model is None:
+                    from sentence_transformers import SentenceTransformer
+
+                    self._model = SentenceTransformer(settings.SEARCH_MODEL_NAME)
         return self._model
+
+    def warm_up(self) -> None:
+        """Load the embedding model early so the first search request is faster."""
+        self.model.encode("warmup")
 
     def generate_embedding(self, text: str) -> list:
         """Generate embedding for a given text using the transformer model."""

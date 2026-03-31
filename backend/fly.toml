@@ -10,6 +10,7 @@ primary_region = 'iad'
 
 [env]
   ENVIRONMENT = 'production'
+  PRELOAD_SEARCH_MODEL = 'true'
 
 [deploy]
   release_command = '/app/.venv/bin/python -c "from app.db.init_db import init_db; init_db()"'

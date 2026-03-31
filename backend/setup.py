@@ -18,4 +18,13 @@ setup(
         "transformers",
         "python-multipart",
     ],
-) 
+    extras_require={
+        "ingestion": [
+            "APScheduler>=3.10.0",
+            "click>=8.1.0",
+            "beautifulsoup4>=4.12.0",
+            "selenium>=4.0.0",
+            "websocket-client>=1.6.0",
+        ],
+    },
+)

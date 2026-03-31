@@ -27,6 +27,9 @@ ENVIRONMENT=local
 ```bash
 # Create or update the local virtual environment managed by uv
 uv sync
+
+# If you also need scraping / scheduler tooling locally
+uv sync --extra ingestion
 ```
 
 ### 3. Database Setup
@@ -84,6 +87,7 @@ uv run python -m app.scripts.clean_encoding
 
 ```bash
 # Step 1: Scrape data (saves to providers.json in backend root)
+uv sync --extra ingestion
 uv run python -m app.scraper.scraper
 
 # Step 2: Move data to proper location
@@ -250,6 +254,9 @@ cp .env.example .env  # Edit with your database details
 
 # 2. Install dependencies
 uv sync
+
+# Optional: install scraper / scheduler dependencies too
+uv sync --extra ingestion
 
 # 3. Initialize database
 uv run python -c "from app.db.init_db import init_db; init_db()"
