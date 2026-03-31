@@ -2,12 +2,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict # type: ignore
 from pydantic import field_validator
 from typing import Optional, List
 
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Therapist Semantic Search"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
     ENVIRONMENT: str = "local"
+    DATABASE_URL: Optional[str] = None
 
     # Comma-separated list of allowed CORS origins, e.g.:
     # ALLOWED_ORIGINS=https://example.com,https://www.example.com
@@ -35,7 +37,22 @@ class Settings(BaseSettings):
     PROD_DB_NAME: Optional[str] = None
 
     @property
-    def DATABASE_URL(self) -> str:
+    def resolved_database_url(self) -> str:
+        if self.DATABASE_URL:
+            if self.DATABASE_URL.startswith("postgres://"):
+                return self.DATABASE_URL.replace(
+                    "postgres://",
+                    "postgresql+psycopg://",
+                    1,
+                )
+            if self.DATABASE_URL.startswith("postgresql://"):
+                return self.DATABASE_URL.replace(
+                    "postgresql://",
+                    "postgresql+psycopg://",
+                    1,
+                )
+            return self.DATABASE_URL
+
         if self.ENVIRONMENT == "production":
             missing = [k for k, v in {
                 "PROD_DB_HOST": self.PROD_DB_HOST,
@@ -64,5 +81,6 @@ class Settings(BaseSettings):
         env_file=".env",
         env_prefix="",
     )
+
 
 settings = Settings()

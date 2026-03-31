@@ -5,30 +5,30 @@
 ### Start the Server
 ```bash
 cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload
+uv sync
+uv run uvicorn app.main:app --reload
 ```
 
 ### Database Setup
 ```bash
 # Create .env file with your database details
 # Then initialize database
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 ```
 
 ### Fix Encoding Issues
 ```bash
-python -m app.scripts.clean_encoding
+uv run python -m app.scripts.clean_encoding
 ```
 
 ### Scrape New Data
 ```bash
-python -m app.scraper.scraper
+uv run python -m app.scraper.scraper
 ```
 
 ### Test Search
 ```bash
-python -m app.scripts.test_multi_criteria
+uv run python -m app.scripts.test_multi_criteria
 ```
 
 ## 🔧 Common Issues & Solutions
@@ -37,8 +37,8 @@ python -m app.scripts.test_multi_criteria
 |-------|----------|
 | `net::ERR_CONNECTION_REFUSED` | Start backend server |
 | `500: Either 'query' or 'criteria' must be provided` | Fill in search criteria |
-| Garbled characters (âDR.SANJAYâ) | Run `python -m app.scripts.clean_encoding` |
-| Database connection error | Check `.env` file and PostgreSQL |
+| Garbled characters (âDR.SANJAYâ) | Run `uv run python -m app.scripts.clean_encoding` |
+| Database connection error | Check `.env` and PostgreSQL or `DATABASE_URL` |
 
 ## 📡 API Endpoints
 
@@ -62,6 +62,7 @@ psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -c "SELECT COUNT(*) FROM therapists WHE
 ## 📝 .env Template
 
 ```bash
+DATABASE_URL=postgresql://your_db_user:your_db_password@localhost:5432/therapists
 ENVIRONMENT=local
 LOCAL_DB_HOST=localhost
 LOCAL_DB_PORT=5432

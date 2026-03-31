@@ -1,6 +1,13 @@
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model: SentenceTransformer | None = None
+
+
+def get_model() -> SentenceTransformer:
+    global model
+    if model is None:
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+    return model
 
 def embed_text(text: str) -> list[float]:
     """
@@ -12,4 +19,4 @@ def embed_text(text: str) -> list[float]:
     Returns:
         List[float]: Embedding vector.
     """
-    return model.encode(text).tolist()
+    return get_model().encode(text).tolist()

@@ -8,7 +8,7 @@ A FastAPI-based backend for semantic search of therapist profiles using embeddin
 
 - Python 3.10+
 - PostgreSQL with pgvector extension
-- Virtual environment (recommended)
+- `uv` installed
 
 ### 1. Environment Setup
 
@@ -16,11 +16,7 @@ Create a `.env` file in the backend directory:
 
 ```bash
 # Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=your_username
-DB_PASS=your_password
-DB_NAME=therapists
+DATABASE_URL=postgresql://your_username:your_password@localhost:5432/therapists
 
 # Environment
 ENVIRONMENT=local
@@ -29,12 +25,8 @@ ENVIRONMENT=local
 ### 2. Install Dependencies
 
 ```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -e .
+# Create or update the local virtual environment managed by uv
+uv sync
 ```
 
 ### 3. Database Setup
@@ -46,24 +38,24 @@ pip install -e .
 psql -U your_username -d therapists -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Run database initialization
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 ```
 
 #### Option B: Using Alembic for migrations
 
 ```bash
 # Run migrations
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### 4. Start the Server
 
 ```bash
 # Development server with auto-reload
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Production server
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at `http://localhost:8000`
@@ -74,10 +66,10 @@ The API will be available at `http://localhost:8000`
 
 ```bash
 # Load therapists from JSON file
-python -m app.scripts.load_therapists path/to/therapists.json
+uv run python -m app.scripts.load_therapists path/to/therapists.json
 
 # Seed test data
-python -c "from app.tests.seed_data import seed_test_data; seed_test_data()"
+uv run python -c "from app.tests.seed_data import seed_test_data; seed_test_data()"
 ```
 
 ### Clean Encoding Issues
@@ -85,20 +77,20 @@ python -c "from app.tests.seed_data import seed_test_data; seed_test_data()"
 If you see garbled characters (like `âDR.SANJAY KUMARâ`), run the encoding cleanup:
 
 ```bash
-python -m app.scripts.clean_encoding
+uv run python -m app.scripts.clean_encoding
 ```
 
 ### Scrape and Load Data
 
 ```bash
 # Step 1: Scrape data (saves to providers.json in backend root)
-python -m app.scraper.scraper
+uv run python -m app.scraper.scraper
 
 # Step 2: Move data to proper location
 mv providers.json data/providers.json
 
 # Step 3: Load data into database
-python -m app.scripts.load_therapists
+uv run python -m app.scripts.load_therapists
 ```
 
 The scraper will:
@@ -113,30 +105,30 @@ The scraper will:
 
 ```bash
 # Test vector search
-python -m app.scripts.test_vector_search
+uv run python -m app.scripts.test_vector_search
 
 # Test multi-criteria search
-python -m app.scripts.test_multi_criteria
+uv run python -m app.scripts.test_multi_criteria
 
 # Test API endpoints
-python -m app.tests.test_search
+uv run python -m app.tests.test_search
 ```
 
 ### Database Operations
 
 ```bash
 # Initialize database tables
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 
 # Reset database (drop and recreate tables)
-python -c "from app.db.init_db import init_db; from app.db.session import engine; from app.db.base import Base; Base.metadata.drop_all(engine); init_db()"
+uv run python -c "from app.db.init_db import init_db; from app.db.session import engine; from app.db.base import Base; Base.metadata.drop_all(engine); init_db()"
 ```
 
 ### Embedding Management
 
 ```bash
 # Generate embeddings for existing therapists
-python -c "from app.services.search import SearchService; from app.db.session import SessionLocal; from app.models.therapist import Therapist; db = SessionLocal(); search_service = SearchService(); [search_service.update_therapist_embedding(db, t) for t in db.query(Therapist).all()]; db.commit(); db.close()"
+uv run python -c "from app.services.search import SearchService; from app.db.session import SessionLocal; from app.models.therapist import Therapist; db = SessionLocal(); search_service = SearchService(); [search_service.update_therapist_embedding(db, t) for t in db.query(Therapist).all()]; db.commit(); db.close()"
 ```
 
 ## 📡 API Endpoints
@@ -200,9 +192,10 @@ Uses sentence transformers (`all-MiniLM-L6-v2`) to find semantically similar the
    - Check `.env` file configuration
    - Ensure PostgreSQL is running
    - Verify pgvector extension is installed
+   - If you're using Render, prefer `DATABASE_URL`
 
 2. **Encoding Issues**
-   - Run `python -m app.scripts.clean_encoding`
+   - Run `uv run python -m app.scripts.clean_encoding`
    - Check if data was scraped with old version
 
 3. **Search Not Working**
@@ -256,34 +249,34 @@ backend/
 cp .env.example .env  # Edit with your database details
 
 # 2. Install dependencies
-pip install -e .
+uv sync
 
 # 3. Initialize database
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 
 # 4. Scrape data
-python -m app.scraper.scraper
+uv run python -m app.scraper.scraper
 
 # 5. Move data to proper location
 mv providers.json data/providers.json
 
 # 6. Load data into database
-python -m app.scripts.load_therapists
+uv run python -m app.scripts.load_therapists
 
 # 7. Start server
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 ### Update Existing Data
 ```bash
 # 1. Clean encoding issues
-python -m app.scripts.clean_encoding
+uv run python -m app.scripts.clean_encoding
 
 # 2. Regenerate embeddings
-python -c "from app.services.search import SearchService; from app.db.session import SessionLocal; from app.models.therapist import Therapist; db = SessionLocal(); search_service = SearchService(); [search_service.update_therapist_embedding(db, t) for t in db.query(Therapist).all()]; db.commit(); db.close()"
+uv run python -c "from app.services.search import SearchService; from app.db.session import SessionLocal; from app.models.therapist import Therapist; db = SessionLocal(); search_service = SearchService(); [search_service.update_therapist_embedding(db, t) for t in db.query(Therapist).all()]; db.commit(); db.close()"
 
 # 3. Restart server
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 ## 📝 Notes
