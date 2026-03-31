@@ -4,7 +4,13 @@ import torch
 
 class EmbeddingService:
     def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self._model: SentenceTransformer | None = None
+
+    @property
+    def model(self) -> SentenceTransformer:
+        if self._model is None:
+            self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        return self._model
         
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text, chunking if over the token limit."""

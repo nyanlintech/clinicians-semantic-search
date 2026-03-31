@@ -14,8 +14,14 @@ logger = logging.getLogger(__name__)
 
 class SearchService:
     def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self._model: SentenceTransformer | None = None
         self.processor = TherapistProcessor()
+
+    @property
+    def model(self) -> SentenceTransformer:
+        if self._model is None:
+            self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        return self._model
 
     def generate_embedding(self, text: str) -> list:
         """Generate embedding for a given text using the transformer model."""

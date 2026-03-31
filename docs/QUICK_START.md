@@ -5,8 +5,8 @@
 ### Start the Server
 ```bash
 cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload
+uv sync
+uv run uvicorn app.main:app --reload
 ```
 
 ### Database Setup
@@ -16,22 +16,22 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Initialize database
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 ```
 
 ### Fix Encoding Issues
 ```bash
-python -m app.scripts.clean_encoding
+uv run python -m app.scripts.clean_encoding
 ```
 
 ### Scrape New Data
 ```bash
-python -m app.scraper.scraper
+uv run python -m app.scraper.scraper
 ```
 
 ### Test Search
 ```bash
-python -m app.scripts.test_multi_criteria
+uv run python -m app.scripts.test_multi_criteria
 ```
 
 ## 🔧 Common Issues & Solutions
@@ -40,9 +40,9 @@ python -m app.scripts.test_multi_criteria
 |-------|----------|
 | `net::ERR_CONNECTION_REFUSED` | Start backend server |
 | `500: Either 'query' or 'criteria' must be provided` | Fill in search criteria |
-| Garbled characters (âDR.SANJAYâ) | Run `python -m app.scripts.clean_encoding` |
-| Database connection error | Check `.env` file and PostgreSQL |
-| ModuleNotFoundError | Ensure virtual environment is activated and dependencies installed |
+| Garbled characters (âDR.SANJAYâ) | Run `uv run python -m app.scripts.clean_encoding` |
+| Database connection error | Check `.env`, PostgreSQL, or `DATABASE_URL` |
+| ModuleNotFoundError | Run `uv sync` to create/update the backend environment |
 
 ## 📡 API Endpoints
 
@@ -88,12 +88,10 @@ Located in `scripts/` directory:
 ```bash
 # Backend
 cd backend
-python -m venv .venv
-source .venv/bin/activate
+uv sync
 cp .env.example .env
 # Edit .env with your database details
-pip install -e .
-python -c "from app.db.init_db import init_db; init_db()"
+uv run python -c "from app.db.init_db import init_db; init_db()"
 
 # Frontend (in new terminal)
 cd frontend
@@ -105,8 +103,7 @@ yarn run dev
 ```bash
 # Terminal 1 - Backend
 cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 
 # Terminal 2 - Frontend
 cd frontend
@@ -117,8 +114,7 @@ yarn run dev
 ```bash
 # Backend tests
 cd backend
-source .venv/bin/activate
-pytest
+uv run pytest
 
 # Frontend tests
 cd frontend

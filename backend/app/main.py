@@ -3,20 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.config import settings
-from app.core.db import SessionLocal
-from app.services.scheduler import SchedulerService
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db = SessionLocal()
-    scheduler = SchedulerService(db)
-    scheduler.start()
-
     yield
-
-    scheduler.stop()
-    db.close()
 
 
 app = FastAPI(
