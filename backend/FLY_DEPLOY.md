@@ -23,6 +23,12 @@ fly secrets set \
 fly deploy
 ```
 
+After deploy, keep the app simple and stable while warming the model:
+
+```bash
+fly scale count 1
+```
+
 ## Notes
 
 - If Fly says the app name is already taken, update the `app` value in `fly.toml`.
@@ -34,6 +40,7 @@ fly deploy
 ```
 
 - Health checks target `GET /health`, which makes boot failures easier to diagnose than the default root check.
+- Health checks are intentionally a little slower and more forgiving because the first semantic-search request can keep the process busy while the model warms up.
 - `ALLOWED_ORIGINS` can be a plain URL or a JSON array string with the current backend config.
 - `DATABASE_URL` is required on Fly unless you also set all `PROD_DB_*` values.
 - If the first deploy is slow because the image includes `torch` and `sentence-transformers`, the Fly config now allows a longer deploy wait before timing out.
