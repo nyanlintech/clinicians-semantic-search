@@ -1,6 +1,8 @@
+import json
+
 from pydantic_settings import BaseSettings, SettingsConfigDict # type: ignore
 from pydantic import field_validator
-from typing import Optional, List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -13,13 +15,22 @@ class Settings(BaseSettings):
 
     # Comma-separated list of allowed CORS origins, e.g.:
     # ALLOWED_ORIGINS=https://example.com,https://www.example.com
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
+    ALLOWED_ORIGINS: str | List[str] = ["http://localhost:5173"]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def parse_allowed_origins(cls, v: object) -> object:
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            value = v.strip()
+            if value.startswith("["):
+                try:
+                    parsed = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+                else:
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
         return v
 
     # Local DB — required when ENVIRONMENT=local
