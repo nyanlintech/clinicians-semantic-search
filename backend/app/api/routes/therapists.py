@@ -1,7 +1,9 @@
+import asyncio
 import logging
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
 
 from app.api.deps import get_db
 from app.services.search import SearchService
@@ -106,13 +108,14 @@ async def search_therapists(
         else:
             raise HTTPException(status_code=400, detail="Either 'query' or 'criteria' must be provided")
 
-        results = search_service.search_therapists(
-            db=db,
-            query=query,
-            insurance=insurance,
-            titles=titles,
-            limit=search_query.limit,
-            min_similarity=search_query.min_similarity
+        results = await asyncio.to_thread(
+            search_service.search_therapists,
+            db,
+            query,
+            insurance,
+            titles,
+            search_query.limit,
+            search_query.min_similarity,
         )
         logger.info("Search returned %d results (limit: %d, min_similarity: %.2f)",
                     len(results), search_query.limit, search_query.min_similarity)

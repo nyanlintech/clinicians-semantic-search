@@ -71,6 +71,7 @@ psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -c "SELECT COUNT(*) FROM therapists WHE
 ```bash
 DATABASE_URL=postgresql://your_db_user:your_db_password@localhost:5432/therapists
 ENVIRONMENT=local
+HF_XET_HIGH_PERFORMANCE=1
 LOCAL_DB_HOST=localhost
 LOCAL_DB_PORT=5432
 LOCAL_DB_USER=your_db_user
