@@ -8,7 +8,7 @@ from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.huggingface import enable_fast_hf_transfers
+from app.core.huggingface import configure_hf_auth, enable_fast_hf_transfers
 from app.models.therapist import Therapist
 from app.services.processor import TherapistProcessor
 
@@ -32,7 +32,10 @@ class SearchService:
                     enable_fast_hf_transfers()
                     from sentence_transformers import SentenceTransformer
 
-                    self._model = SentenceTransformer(settings.SEARCH_MODEL_NAME)
+                    self._model = SentenceTransformer(
+                        settings.SEARCH_MODEL_NAME,
+                        token=configure_hf_auth(settings.HF_TOKEN),
+                    )
         return self._model
 
     def warm_up(self) -> None:
