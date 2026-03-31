@@ -8,6 +8,7 @@ from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.huggingface import enable_fast_hf_transfers
 from app.models.therapist import Therapist
 from app.services.processor import TherapistProcessor
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
+
 
 class SearchService:
     def __init__(self):
@@ -27,6 +29,7 @@ class SearchService:
         if self._model is None:
             with self._model_lock:
                 if self._model is None:
+                    enable_fast_hf_transfers()
                     from sentence_transformers import SentenceTransformer
 
                     self._model = SentenceTransformer(settings.SEARCH_MODEL_NAME)

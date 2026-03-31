@@ -20,6 +20,7 @@ DATABASE_URL=postgresql://your_username:your_password@localhost:5432/therapists
 
 # Environment
 ENVIRONMENT=local
+HF_XET_HIGH_PERFORMANCE=1
 ```
 
 ### 2. Install Dependencies

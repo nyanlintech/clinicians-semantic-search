@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING, Dict, List
 
+from app.core.huggingface import enable_fast_hf_transfers
+
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
+
 
 class EmbeddingService:
     def __init__(self):
@@ -10,10 +13,11 @@ class EmbeddingService:
     @property
     def model(self) -> "SentenceTransformer":
         if self._model is None:
+            enable_fast_hf_transfers()
             from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer("all-MiniLM-L6-v2")
         return self._model
-        
+
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text, chunking if over the token limit."""
         import torch
