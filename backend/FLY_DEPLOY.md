@@ -40,7 +40,8 @@ fly scale count 1
 ```
 
 - Health checks target `GET /health`, which makes boot failures easier to diagnose than the default root check.
-- Health checks are intentionally a little slower and more forgiving because the first semantic-search request can keep the process busy while the model warms up.
+- `PRELOAD_SEARCH_MODEL=true` is set in `fly.toml`, so the app now warms the sentence-transformer in the background right after boot instead of making the first real search request pay that cost.
+- Health checks are intentionally a little slower and more forgiving because model warmup can still be running just after boot.
 - `ALLOWED_ORIGINS` can be a plain URL or a JSON array string with the current backend config.
 - `DATABASE_URL` is required on Fly unless you also set all `PROD_DB_*` values.
 - If the first deploy is slow because the image includes `torch` and `sentence-transformers`, the Fly config now allows a longer deploy wait before timing out.

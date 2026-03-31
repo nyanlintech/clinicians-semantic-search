@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "local"
     DATABASE_URL: Optional[str] = None
+    SEARCH_MODEL_NAME: str = "all-MiniLM-L6-v2"
+    PRELOAD_SEARCH_MODEL: bool = False
 
     # Comma-separated list of allowed CORS origins, e.g.:
     # ALLOWED_ORIGINS=https://example.com,https://www.example.com

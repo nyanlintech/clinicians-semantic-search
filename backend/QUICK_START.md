@@ -9,6 +9,12 @@ uv sync
 uv run uvicorn app.main:app --reload
 ```
 
+If you need the scraper or scheduler locally, install the optional ingestion tools too:
+
+```bash
+uv sync --extra ingestion
+```
+
 ### Database Setup
 ```bash
 # Create .env file with your database details
@@ -23,6 +29,7 @@ uv run python -m app.scripts.clean_encoding
 
 ### Scrape New Data
 ```bash
+uv sync --extra ingestion
 uv run python -m app.scraper.scraper
 ```
 

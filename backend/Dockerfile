@@ -8,7 +8,9 @@ WORKDIR /app
 
 # Install dependencies first (layer-cached separately from code)
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+# Install only production API dependencies. Scraper/scheduler tooling lives in
+# the optional "ingestion" extra and stays out of the Fly runtime image.
+RUN uv sync --frozen --no-dev --no-install-project
 
 # ── Stage 2: runtime ───────────────────────────────────────────
 FROM python:3.11-slim
