@@ -127,6 +127,43 @@ For production:
 VITE_API_URL=https://your-api-domain.com/api/v1
 ```
 
+### Cloudflare Pages
+
+This frontend can be deployed to Cloudflare Pages as a static Vite site.
+
+Use these build settings:
+
+```txt
+Framework preset: Vite
+Root directory: frontend
+Build command: yarn build
+Build output directory: dist
+```
+
+Set this environment variable in the Cloudflare Pages project:
+
+```txt
+VITE_API_URL=https://your-api-domain.com/api/v1
+```
+
+Notes:
+- `VITE_API_URL` must point at your deployed backend, not `localhost`.
+- If your backend is on a different domain, its CORS configuration must allow your Cloudflare Pages site.
+- `public/_redirects` enables SPA fallback so direct visits to app routes still load `index.html`.
+
+Typical deploy flow:
+
+```bash
+git push origin <your-branch>
+```
+
+Then in Cloudflare Pages:
+1. Create a new Pages project connected to your Git repo.
+2. Select the branch you want to deploy.
+3. Set the root directory to `frontend`.
+4. Set `VITE_API_URL` in Settings -> Environment variables.
+5. Trigger the first deployment.
+
 ## 🏗️ Building
 
 ### Development

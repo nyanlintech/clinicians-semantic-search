@@ -10,4 +10,8 @@ npm run build
 
 echo "✅ Frontend build complete!"
 echo "📁 Build files in: frontend/dist/"
-echo "🚀 Deploy to GitHub Pages or Vercel"
+echo "🚀 Cloudflare Pages settings:"
+echo "   - Root directory: frontend"
+echo "   - Build command: yarn build"
+echo "   - Output directory: dist"
+echo "   - Env var: VITE_API_URL=https://your-api-domain.com/api/v1"
