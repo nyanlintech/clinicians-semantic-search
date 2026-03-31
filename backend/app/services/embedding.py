@@ -1,19 +1,23 @@
-from sentence_transformers import SentenceTransformer
-from typing import List, Dict
-import torch
+from typing import TYPE_CHECKING, Dict, List
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 class EmbeddingService:
     def __init__(self):
-        self._model: SentenceTransformer | None = None
+        self._model: "SentenceTransformer | None" = None
 
     @property
-    def model(self) -> SentenceTransformer:
+    def model(self) -> "SentenceTransformer":
         if self._model is None:
+            from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer("all-MiniLM-L6-v2")
         return self._model
         
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text, chunking if over the token limit."""
+        import torch
+
         with torch.no_grad():
             tokens = self.model.tokenize([text])
             token_count = tokens['input_ids'].shape[1]
@@ -36,6 +40,8 @@ class EmbeddingService:
     
     def generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts."""
+        import torch
+
         with torch.no_grad():
             embeddings = self.model.encode(texts)
         return embeddings.tolist()
