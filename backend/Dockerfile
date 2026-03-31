@@ -31,4 +31,4 @@ EXPOSE 8000
 
 # Single worker — loading the model once per process.
 # Multiple workers would duplicate ~500MB RAM each.
-CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["sh", "-c", "/app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
