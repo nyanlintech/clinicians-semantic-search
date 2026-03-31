@@ -42,12 +42,6 @@ const FILTER_LABELS: Record<string, string> = {
   free_consultation: 'Free Consult',
 };
 
-const QUICK_FILTERS = [
-  { label: 'Telehealth', key: 'telehealth', value: 'true' },
-  { label: 'In-Person', key: 'in_person', value: 'true' },
-  { label: 'Free Consult', key: 'free_consultation', value: 'true' },
-];
-
 const SLOW_SEARCH_DELAY_MS = 30_000;
 
 const TherapistCardSkeleton = () => (
@@ -197,23 +191,6 @@ function App() {
     });
   };
 
-  const toggleQuickFilter = (key: string, value: string) => {
-    const current = selectedFilters[key] || [];
-    const idx = current.indexOf(value);
-    if (idx === -1) {
-      setSelectedFilters({ ...selectedFilters, [key]: [...current, value] });
-    } else {
-      const next = current.filter(v => v !== value);
-      if (next.length === 0) {
-        const rest = { ...selectedFilters };
-        delete rest[key];
-        setSelectedFilters(rest);
-      } else {
-        setSelectedFilters({ ...selectedFilters, [key]: next });
-      }
-    }
-  };
-
   const removeFilter = (key: string, value: string) => {
     const next = (selectedFilters[key] || []).filter(v => v !== value);
     if (next.length === 0) {
@@ -359,54 +336,8 @@ function App() {
               {/* ── Results column ── */}
               <Box ref={resultsRef} sx={{ flex: 1, minWidth: 0, px: { xs: 2, md: 3 }, py: 3 }}>
 
-                {/* ── Quick filters + mobile filter button ── */}
+                {/* ── Mobile filter button ── */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
-                  {/* Quick filter chips */}
-                  {QUICK_FILTERS.map(({ label, key, value }) => {
-                    const isActive = selectedFilters[key]?.includes(value) ?? false;
-                    // Only show if there are results for this filter
-                    const hasAny = results.some(t => {
-                      const v = t[key as keyof Therapist];
-                      return v === true || v === 'true';
-                    });
-                    if (!hasAny) return null;
-                    return (
-                      <Chip
-                        key={key}
-                        label={label}
-                        size="small"
-                        onClick={() => toggleQuickFilter(key, value)}
-                        sx={{
-                          height: 30,
-                          fontSize: '0.8125rem',
-                          fontWeight: isActive ? 600 : 400,
-                          borderRadius: '15px',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          ...(isActive
-                            ? {
-                                bgcolor: 'primary.main',
-                                color: 'primary.contrastText',
-                                border: '1px solid',
-                                borderColor: 'primary.main',
-                                '&:hover': { bgcolor: 'primary.dark' },
-                              }
-                            : {
-                                bgcolor: 'transparent',
-                                color: 'text.secondary',
-                                border: '1px solid',
-                                borderColor: 'grey.300',
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  color: 'primary.main',
-                                  bgcolor: 'rgba(37, 61, 46, 0.04)',
-                                },
-                              }),
-                        }}
-                      />
-                    );
-                  })}
-
                   {/* Spacer */}
                   <Box sx={{ flex: 1 }} />
 
