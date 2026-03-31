@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Dict, List
 
-from app.core.huggingface import enable_fast_hf_transfers
+from app.core.config import settings
+from app.core.huggingface import configure_hf_auth, enable_fast_hf_transfers
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
@@ -15,7 +16,10 @@ class EmbeddingService:
         if self._model is None:
             enable_fast_hf_transfers()
             from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer("all-MiniLM-L6-v2")
+            self._model = SentenceTransformer(
+                "all-MiniLM-L6-v2",
+                token=configure_hf_auth(settings.HF_TOKEN),
+            )
         return self._model
 
     def generate_embedding(self, text: str) -> List[float]:
