@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import {
   Box,
   Typography,
@@ -12,17 +12,20 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ClearIcon from '@mui/icons-material/Clear';
+import type { Therapist } from '../types/therapist';
 
 type SelectedFilters = Record<string, string[]>;
+type FilterableValue = Therapist[keyof Therapist];
+type FilterableTherapist = Therapist & Record<string, FilterableValue>;
 
 interface DynamicFiltersProps {
-  searchResults: any[];
+  searchResults: FilterableTherapist[];
   selectedFilters: SelectedFilters;
   onFilterChange: (filters: SelectedFilters) => void;
   compact?: boolean;
 }
 
-const DynamicFilters: React.FC<DynamicFiltersProps> = ({
+const DynamicFilters: FC<DynamicFiltersProps> = ({
   searchResults,
   selectedFilters,
   onFilterChange,
@@ -38,7 +41,8 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
     }
 
     if (newValues.length === 0) {
-      const { [key]: _, ...rest } = selectedFilters;
+      const rest = { ...selectedFilters };
+      delete rest[key];
       onFilterChange(rest);
     } else {
       onFilterChange({ ...selectedFilters, [key]: newValues });
@@ -49,16 +53,18 @@ const DynamicFilters: React.FC<DynamicFiltersProps> = ({
 
   if (searchResults.length === 0) return null;
 
-  const generateFilterOptions = (data: any[], key: string) => {
+  const generateFilterOptions = (data: FilterableTherapist[], key: string) => {
     const counts: Record<string, number> = {};
     data.forEach(item => {
       const value = item[key];
       if (value) {
         if (Array.isArray(value)) {
           value.forEach(v => {
-            if (v) counts[v] = (counts[v] || 0) + 1;
+            if (typeof v === 'string' && v) {
+              counts[v] = (counts[v] || 0) + 1;
+            }
           });
-        } else {
+        } else if (typeof value === 'string') {
           counts[value] = (counts[value] || 0) + 1;
         }
       }

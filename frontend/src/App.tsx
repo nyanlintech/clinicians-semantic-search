@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { SyntheticEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {
@@ -14,13 +15,15 @@ import {
   Drawer,
   Badge,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 
 import { BookmarkBorder, Search, TuneOutlined } from '@mui/icons-material';
 import { SearchInterface } from './components/SearchInterface';
 import { TherapistCard } from './components/TherapistCard';
 import DynamicFilters from './components/DynamicFilters';
-import { searchTherapists } from './services/api';
+import { SearchRequestError, searchTherapists } from './services/api';
 import type { Therapist } from './types/therapist';
 import { theme } from './theme';
 
@@ -44,6 +47,8 @@ const QUICK_FILTERS = [
   { label: 'In-Person', key: 'in_person', value: 'true' },
   { label: 'Free Consult', key: 'free_consultation', value: 'true' },
 ];
+
+const SLOW_SEARCH_DELAY_MS = 30_000;
 
 const TherapistCardSkeleton = () => (
   <Card sx={{ width: '100%' }}>
@@ -72,9 +77,22 @@ function App() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSlowSearch, setIsSlowSearch] = useState(false);
+  const [lastSearchCriteria, setLastSearchCriteria] = useState<string[]>([]);
+  const [lastSearchInsurance, setLastSearchInsurance] = useState<string[]>([]);
+  const [lastSearchTitles, setLastSearchTitles] = useState<string[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const slowSearchTimerRef = useRef<number | null>(null);
 
   const initialCriteria = searchParams.getAll('q');
+
+  const clearSlowSearchTimer = () => {
+    if (slowSearchTimerRef.current !== null) {
+      window.clearTimeout(slowSearchTimerRef.current);
+      slowSearchTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const savedFavorites = localStorage.getItem('therapist-favorites');
@@ -94,12 +112,28 @@ function App() {
     localStorage.setItem('therapist-favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  useEffect(() => {
+    return () => {
+      clearSlowSearchTimer();
+    };
+  }, []);
+
   const handleSearch = async (criteria: string[], insurance: string[], titles: string[]) => {
+    clearSlowSearchTimer();
     setIsLoading(true);
+    setSearchError(null);
+    setIsSlowSearch(false);
     setResults([]);
     setActiveTab(0);
     setSelectedFilters({});
+    setLastSearchCriteria(criteria);
+    setLastSearchInsurance(insurance);
+    setLastSearchTitles(titles);
     setSearchParams(criteria.reduce((p, q) => { p.append('q', q); return p; }, new URLSearchParams()), { replace: true });
+
+    slowSearchTimerRef.current = window.setTimeout(() => {
+      setIsSlowSearch(true);
+    }, SLOW_SEARCH_DELAY_MS);
 
     try {
       const searchResults = await searchTherapists({
@@ -115,6 +149,8 @@ function App() {
         return hasName && (hasIntro || hasTitle);
       });
 
+      clearSlowSearchTimer();
+      setIsSlowSearch(false);
       setResults(validResults);
       setTimeout(() => {
         if (resultsRef.current) {
@@ -124,16 +160,32 @@ function App() {
       }, 50);
     } catch (error) {
       console.error('Error searching therapists:', error);
+      clearSlowSearchTimer();
+      setIsSlowSearch(false);
       setResults([]);
+      setSearchError(
+        error instanceof SearchRequestError
+          ? error.message
+          : 'Something went wrong while searching. Please try again.'
+      );
     } finally {
+      clearSlowSearchTimer();
       setIsLoading(false);
     }
   };
 
   const clearResults = () => {
+    clearSlowSearchTimer();
     setResults([]);
     setSelectedFilters({});
+    setSearchError(null);
+    setIsSlowSearch(false);
     setSearchParams({}, { replace: true });
+  };
+
+  const retryLastSearch = () => {
+    if (lastSearchCriteria.length === 0) return;
+    handleSearch(lastSearchCriteria, lastSearchInsurance, lastSearchTitles);
   };
 
   const toggleFavorite = (therapist: Therapist) => {
@@ -153,7 +205,8 @@ function App() {
     } else {
       const next = current.filter(v => v !== value);
       if (next.length === 0) {
-        const { [key]: _removed, ...rest } = selectedFilters;
+        const rest = { ...selectedFilters };
+        delete rest[key];
         setSelectedFilters(rest);
       } else {
         setSelectedFilters({ ...selectedFilters, [key]: next });
@@ -164,7 +217,8 @@ function App() {
   const removeFilter = (key: string, value: string) => {
     const next = (selectedFilters[key] || []).filter(v => v !== value);
     if (next.length === 0) {
-      const { [key]: _removed, ...rest } = selectedFilters;
+      const rest = { ...selectedFilters };
+      delete rest[key];
       setSelectedFilters(rest);
     } else {
       setSelectedFilters({ ...selectedFilters, [key]: next });
@@ -196,9 +250,9 @@ function App() {
   });
 
   const isFavorite = (therapistId: number) => favorites.some(fav => fav.id === therapistId);
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => setActiveTab(newValue);
+  const handleTabChange = (_event: SyntheticEvent, newValue: number) => setActiveTab(newValue);
 
-  const hasResults = results.length > 0 || isLoading;
+  const hasResults = results.length > 0 || isLoading || searchError !== null;
   const activeFilterCount = Object.values(selectedFilters).reduce((sum, vals) => sum + vals.length, 0);
 
   // All active filter chips as flat [key, value] pairs
@@ -503,9 +557,67 @@ function App() {
                   <Box>
                     {isLoading ? (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.25,
+                            px: 0.5,
+                          }}
+                        >
+                          <CircularProgress size={20} color="secondary" />
+                          <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'text.primary' }}>
+                            Searching therapists...
+                          </Typography>
+                        </Box>
+                        {isSlowSearch && (
+                          <Alert
+                            severity="warning"
+                            sx={{
+                              alignItems: 'flex-start',
+                              bgcolor: 'rgba(181, 98, 45, 0.08)',
+                              border: '1px solid rgba(181, 98, 45, 0.2)',
+                            }}
+                          >
+                            This is taking longer than expected. The backend may be unavailable, but
+                            we&apos;re still waiting for a response.
+                          </Alert>
+                        )}
                         {[0, 1, 2].map(i => (
                           <TherapistCardSkeleton key={i} />
                         ))}
+                      </Box>
+                    ) : searchError ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          minHeight: '240px',
+                          flexDirection: 'column',
+                          gap: 1.5,
+                          textAlign: 'center',
+                          maxWidth: 520,
+                          mx: 'auto',
+                        }}
+                      >
+                        <Typography
+                          sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}
+                        >
+                          Something went wrong while searching
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {searchError}
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={retryLastSearch}
+                          disabled={lastSearchCriteria.length === 0}
+                          sx={{ mt: 1 }}
+                        >
+                          Try again
+                        </Button>
                       </Box>
                     ) : filteredResults.length > 0 ? (
                       <>

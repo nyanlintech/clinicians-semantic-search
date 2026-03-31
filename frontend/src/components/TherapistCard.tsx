@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import {
   Card,
   CardContent,
@@ -54,7 +55,7 @@ const chipStyles = {
 
 // Collapsible chip group: shows first N chips then "+X more"
 const CHIP_LIMIT = 5;
-const ChipGroup = ({ items, style }: { items: string[]; style: React.CSSProperties }) => {
+const ChipGroup = ({ items, style }: { items: string[]; style: CSSProperties }) => {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, CHIP_LIMIT);
   const overflow = items.length - CHIP_LIMIT;

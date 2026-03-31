@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
 import {
   Box,
   TextField,
@@ -7,6 +8,7 @@ import {
   Button,
   Chip,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -20,7 +22,6 @@ interface SearchCriteria {
 interface SearchInterfaceProps {
   onSearch: (criteria: string[], insurance: string[], titles: string[]) => void;
   isLoading: boolean;
-  searchResults: any[];
   onClearResults: () => void;
   hasResults: boolean;
   initialCriteria?: string[];
@@ -53,7 +54,7 @@ export const SearchInterface = ({
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const trimmed = draft.trim();
@@ -268,9 +269,12 @@ export const SearchInterface = ({
                 size="medium"
                 onClick={handleSearch}
                 disabled={isLoading || !hasAnyCriteria}
+                startIcon={
+                  isLoading ? <CircularProgress size={16} color="inherit" /> : undefined
+                }
                 sx={{ minWidth: 88, whiteSpace: 'nowrap', flexShrink: 0 }}
               >
-                Search
+                {isLoading ? 'Searching...' : 'Search'}
               </Button>
               {(committed.length > 0 || hasResults) && (
                 <Button
@@ -341,9 +345,14 @@ export const SearchInterface = ({
                   size="large"
                   onClick={handleSearch}
                   disabled={isLoading || !hasAnyCriteria}
+                  startIcon={
+                    isLoading ? <CircularProgress size={18} color="inherit" /> : undefined
+                  }
                   sx={{ minWidth: 160 }}
                 >
-                  {totalCriteria > 1
+                  {isLoading
+                    ? 'Searching...'
+                    : totalCriteria > 1
                     ? `Search with ${totalCriteria} criteria`
                     : 'Search Therapists'}
                 </Button>

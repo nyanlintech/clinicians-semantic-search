@@ -13,6 +13,18 @@ const api = axios.create({
     },
 });
 
+export class SearchRequestError extends Error {
+    status?: number;
+    code?: string;
+
+    constructor(message: string, options?: { status?: number; code?: string }) {
+        super(message);
+        this.name = 'SearchRequestError';
+        this.status = options?.status;
+        this.code = options?.code;
+    }
+}
+
 export const searchTherapists = async (query: SearchQuery): Promise<Therapist[]> => {
     const requestBody = {
         criteria: query.criteria,
@@ -21,9 +33,30 @@ export const searchTherapists = async (query: SearchQuery): Promise<Therapist[]>
     };
     
     console.log('Sending search request:', requestBody);
-    
-    const response = await api.post<Therapist[]>('/search', requestBody);
-    return response.data;
+
+    try {
+        const response = await api.post<Therapist[]>('/search', requestBody);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            const status = error.response?.status;
+            const code = error.code;
+
+            if (!error.response) {
+                throw new SearchRequestError(
+                    'Unable to reach the search service. Please check that the backend is running and try again.',
+                    { code }
+                );
+            }
+
+            throw new SearchRequestError(
+                `Search failed with status ${status ?? 'unknown'}. Please try again.`,
+                { status, code }
+            );
+        }
+
+        throw new SearchRequestError('Search failed unexpectedly. Please try again.');
+    }
 };
 
 export const getFilters = async (): Promise<Filters> => {
