@@ -25,10 +25,10 @@ primary_region = 'iad'
   processes = ['app']
 
   [[http_service.checks]]
-    grace_period = '30s'
-    interval = '15s'
+    grace_period = '120s'
+    interval = '30s'
     method = 'GET'
-    timeout = '10s'
+    timeout = '20s'
     path = '/health'
     protocol = 'http'
 
