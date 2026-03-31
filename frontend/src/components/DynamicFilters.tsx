@@ -15,11 +15,10 @@ import ClearIcon from '@mui/icons-material/Clear';
 import type { Therapist } from '../types/therapist';
 
 type SelectedFilters = Record<string, string[]>;
-type FilterableValue = Therapist[keyof Therapist];
-type FilterableTherapist = Therapist & Record<string, FilterableValue>;
+type FilterKey = keyof Therapist;
 
 interface DynamicFiltersProps {
-  searchResults: FilterableTherapist[];
+  searchResults: Therapist[];
   selectedFilters: SelectedFilters;
   onFilterChange: (filters: SelectedFilters) => void;
   compact?: boolean;
@@ -53,7 +52,7 @@ const DynamicFilters: FC<DynamicFiltersProps> = ({
 
   if (searchResults.length === 0) return null;
 
-  const generateFilterOptions = (data: FilterableTherapist[], key: string) => {
+  const generateFilterOptions = (data: Therapist[], key: FilterKey) => {
     const counts: Record<string, number> = {};
     data.forEach(item => {
       const value = item[key];
@@ -73,17 +72,17 @@ const DynamicFilters: FC<DynamicFiltersProps> = ({
   };
 
   const listFilters = [
-    { key: 'status', label: 'Status' },
-    { key: 'services', label: 'Services' },
-    { key: 'insurance', label: 'Insurance' },
-    { key: 'other_techniques', label: 'Techniques' },
-    { key: 'other_issues', label: 'Focuses on' },
+    { key: 'status' as const, label: 'Status' },
+    { key: 'services' as const, label: 'Services' },
+    { key: 'insurance' as const, label: 'Insurance' },
+    { key: 'other_techniques' as const, label: 'Techniques' },
+    { key: 'other_issues' as const, label: 'Focuses on' },
   ];
 
   const booleanFilters = [
-    { key: 'telehealth', label: 'Telehealth' },
-    { key: 'in_person', label: 'In-Person' },
-    { key: 'free_consultation', label: 'Free Consultation' },
+    { key: 'telehealth' as const, label: 'Telehealth' },
+    { key: 'in_person' as const, label: 'In-Person' },
+    { key: 'free_consultation' as const, label: 'Free Consultation' },
   ];
 
   const hasActiveFilters = Object.keys(selectedFilters).length > 0;
