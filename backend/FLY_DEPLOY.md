@@ -26,8 +26,17 @@ fly deploy
 ## Notes
 
 - If Fly says the app name is already taken, update the `app` value in `fly.toml`.
-- `ENVIRONMENT=production` is already set in `fly.toml`.
+- `ENVIRONMENT=production` is set in `fly.toml`.
+- Fly now runs a release command before each deploy to enable `pgvector` and create tables:
+
+```bash
+/app/.venv/bin/python -c "from app.db.init_db import init_db; init_db()"
+```
+
+- Health checks target `GET /health`, which makes boot failures easier to diagnose than the default root check.
 - `ALLOWED_ORIGINS` can be a plain URL or a JSON array string with the current backend config.
+- `DATABASE_URL` is required on Fly unless you also set all `PROD_DB_*` values.
+- If the first deploy is slow because the image includes `torch` and `sentence-transformers`, the Fly config now allows a longer deploy wait before timing out.
 - After deploy, test:
 
 ```bash
