@@ -1,11 +1,15 @@
-from sentence_transformers import SentenceTransformer
+from typing import TYPE_CHECKING
 
-model: SentenceTransformer | None = None
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
+model: "SentenceTransformer | None" = None
 
 
-def get_model() -> SentenceTransformer:
+def get_model() -> "SentenceTransformer":
     global model
     if model is None:
+        from sentence_transformers import SentenceTransformer
         model = SentenceTransformer("all-MiniLM-L6-v2")
     return model
 

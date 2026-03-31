@@ -1,9 +1,8 @@
 import logging
 import re
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 
@@ -12,14 +11,18 @@ from app.services.processor import TherapistProcessor
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
 class SearchService:
     def __init__(self):
-        self._model: SentenceTransformer | None = None
+        self._model: "SentenceTransformer | None" = None
         self.processor = TherapistProcessor()
 
     @property
-    def model(self) -> SentenceTransformer:
+    def model(self) -> "SentenceTransformer":
         if self._model is None:
+            from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer("all-MiniLM-L6-v2")
         return self._model
 
