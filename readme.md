@@ -2,6 +2,12 @@
 
 A full-stack web application for semantic search of mental health therapists using AI embeddings. This project combines FastAPI backend with semantic search capabilities and a modern React frontend for therapist discovery and filtering.
 
+## Live Demo
+
+- **Deployed app:** https://clinicians-semantic-search.pages.dev/
+
+https://github.com/user-attachments/assets/9997edff-b6f1-4e9c-bc1e-c0f2bdfe9f00
+
 ## 🎯 Features
 
 - **Semantic Search** - Find therapists using natural language queries powered by embeddings
