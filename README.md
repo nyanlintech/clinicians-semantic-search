@@ -1,155 +1,84 @@
-# Clinicians Semantic Search
+# PDX Therapist Finder
 
-A full-stack web application for semantic search of mental health therapists using AI embeddings. This project combines FastAPI backend with semantic search capabilities and a modern React frontend for therapist discovery and filtering.
+A semantic search application for finding Portland-area mental health therapists using AI-powered natural language queries.
 
-## Live Demo
-
-- **Deployed app:** https://clinicians-semantic-search.pages.dev/
+**Live:** https://clinicians-semantic-search.pages.dev/
 
 https://github.com/user-attachments/assets/9997edff-b6f1-4e9c-bc1e-c0f2bdfe9f00
 
-## 🎯 Features
+## Motivation
 
-- **Semantic Search** - Find therapists using natural language queries powered by embeddings
-- **Multi-Criteria Filtering** - Filter by specialties, location, insurance, and more
-- **Vector Database** - PostgreSQL with pgvector for efficient similarity search
-- **Modern UI** - React + TypeScript frontend with Vite
-- **RESTful API** - FastAPI backend with comprehensive endpoints
-- **Auto-Updating** - Scheduled data ingestion and embedding updates
+Finding a therapist is hard. Most directories require you to already know what you're looking for — specific modality names, insurance codes, or clinical terms. PDX Therapist Finder lets you describe what you need in plain language ("therapist who works with trauma and accepts sliding scale") and uses semantic embeddings to surface the most relevant matches.
 
-## 📋 Table of Contents
+The goal is to lower the friction of finding care for people who don't know the clinical vocabulary, and to help therapists get discovered based on what they actually do rather than just keyword overlap.
 
-- [Project Structure](#project-structure)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
+## Quick Start
 
-## 📁 Project Structure
-
-```
-clinicians-semantic-search/
-├── backend/              # FastAPI backend
-│   ├── app/             # Application code
-│   ├── data/            # Data files (not committed)
-│   ├── README.md        # Backend documentation
-│   └── pyproject.toml   # Python dependencies
-├── frontend/            # React + TypeScript frontend
-│   ├── src/             # Source code
-│   ├── README.md        # Frontend documentation
-│   └── package.json     # Node dependencies
-├── scripts/             # Development and deployment scripts
-├── docs/                # Project documentation
-└── README.md            # This file
-```
-
-## 🛠 Tech Stack
+**Prerequisites:** Python 3.11+, Node.js 18+, PostgreSQL 14+ with pgvector, [uv](https://docs.astral.sh/uv/), [yarn](https://yarnpkg.com/)
 
 ### Backend
-- **Framework:** FastAPI
-- **Database:** PostgreSQL with pgvector
-- **Embeddings:** Sentence Transformers (all-MiniLM-L6-v2)
-- **ORM:** SQLAlchemy
-- **Language:** Python 3.10+
-
-### Frontend
-- **Framework:** React 18
-- **Language:** TypeScript
-- **Build Tool:** Vite
-- **Styling:** Material UI v5 (MUI) with Emotion
-
-## 📋 Prerequisites
-
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (Python package manager)
-- Node.js 18+ with [yarn](https://yarnpkg.com/)
-- PostgreSQL 14+ with pgvector extension
-- Git
-
-## 🚀 Quick Start
-
-### Backend Setup
 
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Copy environment template
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Install dependencies (uses uv — install from https://docs.astral.sh/uv/)
+cp .env.example .env        # fill in database credentials
 uv sync
-
-# Initialize database
-python -c "from app.db.init_db import init_db; init_db()"
-
-# Start development server
 uvicorn app.main:app --reload
 ```
 
-Backend runs on `http://localhost:8000`
+Runs on `http://localhost:8000`
 
-### Frontend Setup
+### Frontend
 
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install dependencies
 yarn
-
-# Start development server
 yarn dev
 ```
 
-Frontend runs on `http://localhost:5173`
+Runs on `http://localhost:5173`
 
-### Full Setup with Scripts
+## Usage
 
-See [QUICK_START.md](docs/QUICK_START.md) for detailed setup instructions and available scripts.
+Open `http://localhost:5173` and type a natural language description of what you're looking for:
 
-## 📚 Documentation
+- *"therapist specializing in anxiety and EMDR"*
+- *"bilingual Spanish-speaking therapist accepting Medicaid"*
+- *"couples counselor with evening availability"*
 
-- **[Backend README](backend/README.md)** - Backend setup and API documentation
-- **[Frontend README](frontend/README.md)** - Frontend setup and component guide
-- **[Quick Start Guide](docs/QUICK_START.md)** - Development scripts and commands
-- **[Architecture](docs/ARCHITECTURE.md)** - System design and data flow
-- **[API Reference](docs/API.md)** - Detailed API endpoints
+Results are ranked by semantic similarity. Use the filters to narrow by insurance, specialty, or location.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Code style and conventions
-- Testing requirements
-- Commit message format
-- Pull request process
-
-## 📝 License
-
-This project is licensed under the [MIT License](LICENSE).
-
-## 🔧 Common Commands
+**Common commands:**
 
 ```bash
 # Backend
 cd backend
-uv run uvicorn app.main:app --reload  # Start dev server
-uv run pytest                         # Run tests
-uv run python -m app.scripts.test_search  # Test search functionality
+uv run uvicorn app.main:app --reload   # dev server
+uv run pytest                          # tests
 
 # Frontend
 cd frontend
-yarn dev                            # Start dev server
-yarn build                          # Build for production
-yarn lint                           # Run linter
+yarn dev                               # dev server
+yarn build                             # production build
+yarn lint                              # lint
 ```
 
-## 🐛 Troubleshooting
+## Contributing
 
-For common issues and solutions, see [QUICK_START.md](docs/QUICK_START.md).
+Contributions are welcome. Please open an issue before starting significant work so we can align on approach.
 
-## 📧 Questions?
+- Follow existing code style (ruff/black for Python, ESLint for TypeScript)
+- Add tests for new backend functionality
+- Keep PRs focused — one concern per PR
 
-Feel free to open an issue on GitHub or check the documentation folders.
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite, MUI v5 |
+| Backend | FastAPI, Python 3.11+ |
+| Database | PostgreSQL + pgvector |
+| Embeddings | Sentence Transformers |
+
+## License
+
+[MIT](LICENSE)
