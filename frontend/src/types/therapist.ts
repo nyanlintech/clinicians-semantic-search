@@ -42,6 +42,16 @@ export interface SearchQuery {
     criteria?: string[];  // New multi-criteria support
     insurance?: string[];
     titles?: string[];
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaginatedResponse {
+    items: Therapist[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_more: boolean;
 }
 
 export interface Filters {

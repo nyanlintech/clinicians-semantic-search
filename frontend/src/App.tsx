@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import type { SyntheticEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { useState, useEffect, useRef } from "react";
+import type { SyntheticEvent } from "react";
+import { useSearchParams } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
 import {
   Box,
   Typography,
@@ -17,38 +17,49 @@ import {
   Chip,
   Alert,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 
-import { BookmarkBorder, Search, TuneOutlined } from '@mui/icons-material';
-import { SearchInterface } from './components/SearchInterface';
-import { TherapistCard } from './components/TherapistCard';
-import DynamicFilters from './components/DynamicFilters';
-import { SearchRequestError, searchTherapists } from './services/api';
-import type { Therapist } from './types/therapist';
-import { theme } from './theme';
+import { BookmarkBorder, Search, TuneOutlined } from "@mui/icons-material";
+import { SearchInterface } from "./components/SearchInterface";
+import { TherapistCard } from "./components/TherapistCard";
+import DynamicFilters from "./components/DynamicFilters";
+import { SearchRequestError, searchTherapists } from "./services/api";
+import type { Therapist } from "./types/therapist";
+import { theme } from "./theme";
 
 const queryClient = new QueryClient();
 
-const BOOLEAN_FILTER_KEYS = new Set(['telehealth', 'in_person', 'free_consultation']);
+const BOOLEAN_FILTER_KEYS = new Set([
+  "telehealth",
+  "in_person",
+  "free_consultation",
+]);
 
 const FILTER_LABELS: Record<string, string> = {
-  status: 'Status',
-  services: 'Services',
-  insurance: 'Insurance',
-  other_techniques: 'Technique',
-  other_issues: 'Focus',
-  telehealth: 'Telehealth',
-  in_person: 'In-Person',
-  free_consultation: 'Free Consult',
+  status: "Status",
+  services: "Services",
+  insurance: "Insurance",
+  other_techniques: "Technique",
+  other_issues: "Focus",
+  telehealth: "Telehealth",
+  in_person: "In-Person",
+  free_consultation: "Free Consult",
 };
 
 const SLOW_SEARCH_DELAY_MS = 30_000;
 
 const TherapistCardSkeleton = () => (
-  <Card sx={{ width: '100%' }}>
-    <CardContent sx={{ p: { xs: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2.5, md: 3 } } }}>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
-        <Skeleton variant="circular" width={68} height={68} sx={{ flexShrink: 0 }} />
+  <Card sx={{ width: "100%" }}>
+    <CardContent
+      sx={{ p: { xs: 2.5, md: 3 }, "&:last-child": { pb: { xs: 2.5, md: 3 } } }}
+    >
+      <Box sx={{ display: "flex", gap: 2, mb: 2.5 }}>
+        <Skeleton
+          variant="circular"
+          width={68}
+          height={68}
+          sx={{ flexShrink: 0 }}
+        />
         <Box sx={{ flex: 1 }}>
           <Skeleton width="42%" height={22} sx={{ mb: 0.75 }} />
           <Skeleton width="32%" height={16} sx={{ mb: 0.5 }} />
@@ -68,18 +79,24 @@ function App() {
   const [results, setResults] = useState<Therapist[]>([]);
   const [favorites, setFavorites] = useState<Therapist[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string[]>
+  >({});
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSlowSearch, setIsSlowSearch] = useState(false);
   const [lastSearchCriteria, setLastSearchCriteria] = useState<string[]>([]);
   const [lastSearchInsurance, setLastSearchInsurance] = useState<string[]>([]);
   const [lastSearchTitles, setLastSearchTitles] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const slowSearchTimerRef = useRef<number | null>(null);
 
-  const initialCriteria = searchParams.getAll('q');
+  const initialCriteria = searchParams.getAll("q");
 
   const clearSlowSearchTimer = () => {
     if (slowSearchTimerRef.current !== null) {
@@ -89,7 +106,7 @@ function App() {
   };
 
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('therapist-favorites');
+    const savedFavorites = localStorage.getItem("therapist-favorites");
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
@@ -103,7 +120,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('therapist-favorites', JSON.stringify(favorites));
+    localStorage.setItem("therapist-favorites", JSON.stringify(favorites));
   }, [favorites]);
 
   useEffect(() => {
@@ -112,59 +129,101 @@ function App() {
     };
   }, []);
 
-  const handleSearch = async (criteria: string[], insurance: string[], titles: string[]) => {
+  const PAGE_SIZE = 20;
+
+  const filterValid = (items: Therapist[]) =>
+    items.filter((t) => t.name?.trim() && (t.intro?.trim() || t.title?.trim()));
+
+  const handleSearch = async (
+    criteria: string[],
+    insurance: string[],
+    titles: string[]
+  ) => {
     clearSlowSearchTimer();
     setIsLoading(true);
     setSearchError(null);
     setIsSlowSearch(false);
     setResults([]);
+    setCurrentPage(1);
+    setTotalResults(0);
+    setHasMore(false);
     setActiveTab(0);
     setSelectedFilters({});
     setLastSearchCriteria(criteria);
     setLastSearchInsurance(insurance);
     setLastSearchTitles(titles);
-    setSearchParams(criteria.reduce((p, q) => { p.append('q', q); return p; }, new URLSearchParams()), { replace: true });
+    setSearchParams(
+      criteria.reduce((p, q) => {
+        p.append("q", q);
+        return p;
+      }, new URLSearchParams()),
+      { replace: true }
+    );
 
     slowSearchTimerRef.current = window.setTimeout(() => {
       setIsSlowSearch(true);
     }, SLOW_SEARCH_DELAY_MS);
 
     try {
-      const searchResults = await searchTherapists({
+      const data = await searchTherapists({
         criteria,
         insurance: insurance.length > 0 ? insurance : undefined,
         titles: titles.length > 0 ? titles : undefined,
-      });
-
-      const validResults = searchResults.filter(therapist => {
-        const hasName = therapist.name && therapist.name.trim() !== '';
-        const hasIntro = therapist.intro && therapist.intro.trim() !== '';
-        const hasTitle = therapist.title && therapist.title.trim() !== '';
-        return hasName && (hasIntro || hasTitle);
+        page: 1,
+        page_size: PAGE_SIZE,
       });
 
       clearSlowSearchTimer();
       setIsSlowSearch(false);
-      setResults(validResults);
+      setResults(filterValid(data.items));
+      setTotalResults(data.total);
+      setHasMore(data.has_more);
+      setCurrentPage(1);
       setTimeout(() => {
         if (resultsRef.current) {
-          const top = resultsRef.current.getBoundingClientRect().top + window.scrollY - 72;
-          window.scrollTo({ top, behavior: 'smooth' });
+          const top =
+            resultsRef.current.getBoundingClientRect().top +
+            window.scrollY -
+            72;
+          window.scrollTo({ top, behavior: "smooth" });
         }
       }, 50);
     } catch (error) {
-      console.error('Error searching therapists:', error);
+      console.error("Error searching therapists:", error);
       clearSlowSearchTimer();
       setIsSlowSearch(false);
       setResults([]);
       setSearchError(
         error instanceof SearchRequestError
           ? error.message
-          : 'Something went wrong while searching. Please try again.'
+          : "Something went wrong while searching. Please try again."
       );
     } finally {
       clearSlowSearchTimer();
       setIsLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+    try {
+      const data = await searchTherapists({
+        criteria: lastSearchCriteria,
+        insurance:
+          lastSearchInsurance.length > 0 ? lastSearchInsurance : undefined,
+        titles: lastSearchTitles.length > 0 ? lastSearchTitles : undefined,
+        page: nextPage,
+        page_size: PAGE_SIZE,
+      });
+      setResults((prev) => [...prev, ...filterValid(data.items)]);
+      setHasMore(data.has_more);
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.error("Error loading more therapists:", error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -174,6 +233,9 @@ function App() {
     setSelectedFilters({});
     setSearchError(null);
     setIsSlowSearch(false);
+    setCurrentPage(1);
+    setTotalResults(0);
+    setHasMore(false);
     setSearchParams({}, { replace: true });
   };
 
@@ -183,16 +245,16 @@ function App() {
   };
 
   const toggleFavorite = (therapist: Therapist) => {
-    setFavorites(prev => {
-      const isFavorite = prev.some(fav => fav.id === therapist.id);
+    setFavorites((prev) => {
+      const isFavorite = prev.some((fav) => fav.id === therapist.id);
       return isFavorite
-        ? prev.filter(fav => fav.id !== therapist.id)
+        ? prev.filter((fav) => fav.id !== therapist.id)
         : [...prev, therapist];
     });
   };
 
   const removeFilter = (key: string, value: string) => {
-    const next = (selectedFilters[key] || []).filter(v => v !== value);
+    const next = (selectedFilters[key] || []).filter((v) => v !== value);
     if (next.length === 0) {
       const rest = { ...selectedFilters };
       delete rest[key];
@@ -202,23 +264,30 @@ function App() {
     }
   };
 
-  const filteredResults = results.filter(therapist => {
+  const filteredResults = results.filter((therapist) => {
     return Object.entries(selectedFilters).every(([key, values]) => {
       if (values.length === 0) return true;
       const therapistValue = therapist[key as keyof Therapist];
 
       if (BOOLEAN_FILTER_KEYS.has(key)) {
-        const booleanValues = values.map(v => v === 'true');
+        const booleanValues = values.map((v) => v === "true");
         return booleanValues.includes(therapistValue as boolean);
       }
 
       if (Array.isArray(therapistValue)) {
-        if (therapistValue.every(item => typeof item === 'string')) {
-          return values.some(v => (therapistValue as string[]).includes(v));
+        if (therapistValue.every((item) => typeof item === "string")) {
+          return values.some((v) => (therapistValue as string[]).includes(v));
         }
-        if (therapistValue.every(item => typeof item === 'object' && item !== null && 'name' in item)) {
-          const names = therapistValue.map(item => (item as { name: string }).name);
-          return values.some(v => names.includes(v));
+        if (
+          therapistValue.every(
+            (item) =>
+              typeof item === "object" && item !== null && "name" in item
+          )
+        ) {
+          const names = therapistValue.map(
+            (item) => (item as { name: string }).name
+          );
+          return values.some((v) => names.includes(v));
         }
       }
 
@@ -226,65 +295,70 @@ function App() {
     });
   });
 
-  const isFavorite = (therapistId: number) => favorites.some(fav => fav.id === therapistId);
-  const handleTabChange = (_event: SyntheticEvent, newValue: number) => setActiveTab(newValue);
+  const isFavorite = (therapistId: number) =>
+    favorites.some((fav) => fav.id === therapistId);
+  const handleTabChange = (_event: SyntheticEvent, newValue: number) =>
+    setActiveTab(newValue);
 
   const hasResults = results.length > 0 || isLoading || searchError !== null;
-  const activeFilterCount = Object.values(selectedFilters).reduce((sum, vals) => sum + vals.length, 0);
+  const activeFilterCount = Object.values(selectedFilters).reduce(
+    (sum, vals) => sum + vals.length,
+    0
+  );
 
   // All active filter chips as flat [key, value] pairs
-  const activeFilterChips = Object.entries(selectedFilters).flatMap(([key, values]) =>
-    values.map(value => ({ key, value }))
+  const activeFilterChips = Object.entries(selectedFilters).flatMap(
+    ([key, values]) => values.map((value) => ({ key, value }))
   );
 
   return (
     <ThemeProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* ── Top nav bar ── */}
           <Box
             component="nav"
             sx={{
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'rgba(245, 240, 232, 0.92)',
-              backdropFilter: 'blur(12px)',
-              position: 'sticky',
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              bgcolor: "rgba(245, 240, 232, 0.92)",
+              backdropFilter: "blur(12px)",
+              position: "sticky",
               top: 0,
               zIndex: 100,
               px: { xs: 2, md: 4 },
               py: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
             <Typography
               sx={{
                 fontFamily: '"Cormorant Garamond", Georgia, serif',
                 fontWeight: 600,
-                fontSize: '1.25rem',
-                color: 'text.primary',
-                letterSpacing: '0',
+                fontSize: "1.25rem",
+                color: "text.primary",
+                letterSpacing: "0",
               }}
             >
               PDX Therapist Finder
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {hasResults && !isLoading && (
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {filteredResults.length} results
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {totalResults} results
                 </Typography>
               )}
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 Portland, OR
               </Typography>
               <Box
                 sx={{
                   width: 6,
                   height: 6,
-                  borderRadius: '50%',
-                  bgcolor: '#B5622D',
+                  borderRadius: "50%",
+                  bgcolor: "#B5622D",
                 }}
               />
             </Box>
@@ -294,7 +368,6 @@ function App() {
           <SearchInterface
             onSearch={handleSearch}
             isLoading={isLoading}
-            searchResults={results}
             onClearResults={clearResults}
             hasResults={hasResults}
             initialCriteria={initialCriteria}
@@ -302,26 +375,31 @@ function App() {
 
           {/* ── Results Section ── */}
           {hasResults && (
-            <Box sx={{ maxWidth: 1400, mx: 'auto', display: 'flex' }}>
+            <Box sx={{ maxWidth: 1400, mx: "auto", display: "flex" }}>
               {/* ── Sidebar (desktop only) ── */}
               <Box
                 sx={{
                   width: 268,
                   flexShrink: 0,
-                  display: { xs: 'none', md: 'block' },
-                  position: 'sticky',
+                  display: { xs: "none", md: "block" },
+                  position: "sticky",
                   top: 112,
-                  height: 'calc(100vh - 112px)',
-                  overflowY: 'auto',
-                  borderRight: '1px solid',
-                  borderColor: 'divider',
+                  height: "calc(100vh - 112px)",
+                  overflowY: "auto",
+                  borderRight: "1px solid",
+                  borderColor: "divider",
                   p: 2.5,
-                  bgcolor: 'background.paper',
+                  bgcolor: "background.paper",
                 }}
               >
                 <Typography
                   variant="overline"
-                  sx={{ color: 'text.secondary', mb: 2, display: 'block', letterSpacing: '0.1em' }}
+                  sx={{
+                    color: "text.secondary",
+                    mb: 2,
+                    display: "block",
+                    letterSpacing: "0.1em",
+                  }}
                 >
                   Refine Results
                 </Typography>
@@ -334,28 +412,50 @@ function App() {
               </Box>
 
               {/* ── Results column ── */}
-              <Box ref={resultsRef} sx={{ flex: 1, minWidth: 0, px: { xs: 2, md: 3 }, py: 3 }}>
-
+              <Box
+                ref={resultsRef}
+                sx={{ flex: 1, minWidth: 0, px: { xs: 2, md: 3 }, py: 3 }}
+              >
                 {/* ── Mobile filter button ── */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2.5,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {/* Spacer */}
                   <Box sx={{ flex: 1 }} />
 
                   {/* Mobile filter button */}
-                  <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-                    <Badge badgeContent={activeFilterCount} color="primary" sx={{ '& .MuiBadge-badge': { fontSize: '0.75rem' } }}>
+                  <Box sx={{ display: { xs: "flex", md: "none" } }}>
+                    <Badge
+                      badgeContent={activeFilterCount}
+                      color="primary"
+                      sx={{ "& .MuiBadge-badge": { fontSize: "0.75rem" } }}
+                    >
                       <Button
                         variant="outlined"
                         size="small"
-                        startIcon={<TuneOutlined sx={{ fontSize: '1rem !important' }} />}
+                        startIcon={
+                          <TuneOutlined sx={{ fontSize: "1rem !important" }} />
+                        }
                         onClick={() => setFiltersOpen(true)}
                         sx={{
-                          borderColor: activeFilterCount > 0 ? 'primary.main' : 'grey.300',
-                          color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
-                          fontSize: '0.8125rem',
+                          borderColor:
+                            activeFilterCount > 0 ? "primary.main" : "grey.300",
+                          color:
+                            activeFilterCount > 0
+                              ? "primary.main"
+                              : "text.secondary",
+                          fontSize: "0.8125rem",
                         }}
                       >
-                        {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+                        {activeFilterCount > 0
+                          ? `Filters (${activeFilterCount})`
+                          : "Filters"}
                       </Button>
                     </Badge>
                   </Box>
@@ -365,14 +465,14 @@ function App() {
                 {activeFilterChips.length > 0 && (
                   <Box
                     sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
+                      display: "flex",
+                      flexWrap: "wrap",
                       gap: 0.75,
                       mb: 2,
                       pb: 2,
-                      borderBottom: '1px solid',
-                      borderColor: 'divider',
-                      alignItems: 'center',
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      alignItems: "center",
                     }}
                   >
                     {activeFilterChips.map(({ key, value }) => {
@@ -387,16 +487,16 @@ function App() {
                           onDelete={() => removeFilter(key, value)}
                           sx={{
                             height: 26,
-                            fontSize: '0.8rem',
+                            fontSize: "0.8rem",
                             fontWeight: 500,
-                            bgcolor: 'rgba(37, 61, 46, 0.08)',
-                            color: 'primary.main',
-                            border: '1px solid rgba(37, 61, 46, 0.2)',
-                            borderRadius: '4px',
-                            '& .MuiChip-deleteIcon': {
-                              fontSize: '0.9rem',
-                              color: 'rgba(37, 61, 46, 0.4)',
-                              '&:hover': { color: 'primary.main' },
+                            bgcolor: "rgba(37, 61, 46, 0.08)",
+                            color: "primary.main",
+                            border: "1px solid rgba(37, 61, 46, 0.2)",
+                            borderRadius: "4px",
+                            "& .MuiChip-deleteIcon": {
+                              fontSize: "0.9rem",
+                              color: "rgba(37, 61, 46, 0.4)",
+                              "&:hover": { color: "primary.main" },
                             },
                           }}
                         />
@@ -407,7 +507,12 @@ function App() {
                         variant="text"
                         size="small"
                         onClick={() => setSelectedFilters({})}
-                        sx={{ fontSize: '0.8rem', color: 'text.secondary', px: 0.5, minWidth: 0 }}
+                        sx={{
+                          fontSize: "0.8rem",
+                          color: "text.secondary",
+                          px: 0.5,
+                          minWidth: 0,
+                        }}
                       >
                         Clear all
                       </Button>
@@ -416,7 +521,13 @@ function App() {
                 )}
 
                 {/* ── Tabs ── */}
-                <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', mb: 3 }}>
+                <Box
+                  sx={{
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    mb: 3,
+                  }}
+                >
                   <Tabs value={activeTab} onChange={handleTabChange}>
                     <Tab
                       icon={<Search sx={{ fontSize: 15 }} />}
@@ -428,15 +539,15 @@ function App() {
                               component="span"
                               sx={{
                                 ml: 1,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                                 minWidth: 20,
                                 height: 20,
-                                borderRadius: '10px',
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                fontSize: '0.75rem',
+                                borderRadius: "10px",
+                                bgcolor: "primary.main",
+                                color: "white",
+                                fontSize: "0.75rem",
                                 fontWeight: 700,
                                 px: 0.75,
                               }}
@@ -459,15 +570,15 @@ function App() {
                               component="span"
                               sx={{
                                 ml: 1,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                                 minWidth: 20,
                                 height: 20,
-                                borderRadius: '10px',
-                                bgcolor: 'secondary.main',
-                                color: 'white',
-                                fontSize: '0.75rem',
+                                borderRadius: "10px",
+                                bgcolor: "secondary.main",
+                                color: "white",
+                                fontSize: "0.75rem",
                                 fontWeight: 700,
                                 px: 0.75,
                               }}
@@ -487,17 +598,29 @@ function App() {
                 {activeTab === 0 && (
                   <Box>
                     {isLoading ? (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
                         <Box
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
+                            display: "flex",
+                            alignItems: "center",
                             gap: 1.25,
                             px: 0.5,
                           }}
                         >
                           <CircularProgress size={20} color="secondary" />
-                          <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'text.primary' }}>
+                          <Typography
+                            sx={{
+                              fontSize: "0.95rem",
+                              fontWeight: 600,
+                              color: "text.primary",
+                            }}
+                          >
                             Searching therapists...
                           </Typography>
                         </Box>
@@ -505,35 +628,40 @@ function App() {
                           <Alert
                             severity="warning"
                             sx={{
-                              alignItems: 'flex-start',
-                              bgcolor: 'rgba(181, 98, 45, 0.08)',
-                              border: '1px solid rgba(181, 98, 45, 0.2)',
+                              alignItems: "flex-start",
+                              bgcolor: "rgba(181, 98, 45, 0.08)",
+                              border: "1px solid rgba(181, 98, 45, 0.2)",
                             }}
                           >
-                            This is taking longer than expected. The backend may be unavailable, but
-                            we&apos;re still waiting for a response.
+                            This is taking longer than expected. The backend may
+                            be unavailable, but we&apos;re still waiting for a
+                            response.
                           </Alert>
                         )}
-                        {[0, 1, 2].map(i => (
+                        {[0, 1, 2].map((i) => (
                           <TherapistCardSkeleton key={i} />
                         ))}
                       </Box>
                     ) : searchError ? (
                       <Box
                         sx={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          minHeight: '240px',
-                          flexDirection: 'column',
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          minHeight: "240px",
+                          flexDirection: "column",
                           gap: 1.5,
-                          textAlign: 'center',
+                          textAlign: "center",
                           maxWidth: 520,
-                          mx: 'auto',
+                          mx: "auto",
                         }}
                       >
                         <Typography
-                          sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}
+                          sx={{
+                            fontSize: "1.125rem",
+                            fontWeight: 600,
+                            color: "text.primary",
+                          }}
                         >
                           Something went wrong while searching
                         </Typography>
@@ -555,13 +683,27 @@ function App() {
                         {/* Result summary */}
                         <Typography
                           variant="caption"
-                          sx={{ display: 'block', mb: 2, color: 'text.secondary' }}
+                          sx={{
+                            display: "block",
+                            mb: 2,
+                            color: "text.secondary",
+                          }}
                         >
                           {activeFilterChips.length > 0
-                            ? `${filteredResults.length} of ${results.length} therapists after filtering`
-                            : `${results.length} therapist${results.length !== 1 ? 's' : ''} found`}
+                            ? `${filteredResults.length} of ${results.length} loaded therapists after filtering`
+                            : `Showing ${
+                                results.length
+                              } of ${totalResults} therapist${
+                                totalResults !== 1 ? "s" : ""
+                              } found`}
                         </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2,
+                          }}
+                        >
                           {filteredResults.map((therapist, index) => (
                             <TherapistCard
                               key={therapist.id}
@@ -572,36 +714,71 @@ function App() {
                             />
                           ))}
                         </Box>
+                        {hasMore && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              mt: 3,
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              onClick={handleLoadMore}
+                              disabled={isLoadingMore}
+                              startIcon={
+                                isLoadingMore ? (
+                                  <CircularProgress size={16} color="inherit" />
+                                ) : undefined
+                              }
+                              sx={{
+                                borderColor: "grey.300",
+                                color: "text.secondary",
+                                px: 4,
+                              }}
+                            >
+                              {isLoadingMore ? "Loading..." : `Load more`}
+                            </Button>
+                          </Box>
+                        )}
                       </>
                     ) : (
                       <Box
                         sx={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          minHeight: '240px',
-                          flexDirection: 'column',
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          minHeight: "240px",
+                          flexDirection: "column",
                           gap: 1,
                         }}
                       >
                         <Typography
-                          sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}
+                          sx={{
+                            fontSize: "1.125rem",
+                            fontWeight: 600,
+                            color: "text.primary",
+                          }}
                         >
                           {results.length > 0
-                            ? 'No therapists match the selected filters'
-                            : 'No results found'}
+                            ? "No therapists match the selected filters"
+                            : "No results found"}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {results.length > 0
-                            ? 'Try removing some filters'
-                            : 'Try different search terms'}
+                            ? "Try removing some filters"
+                            : "Try different search terms"}
                         </Typography>
                         {results.length > 0 && activeFilterChips.length > 0 && (
                           <Button
                             variant="outlined"
                             size="small"
                             onClick={() => setSelectedFilters({})}
-                            sx={{ mt: 1, borderColor: 'grey.300', color: 'text.secondary' }}
+                            sx={{
+                              mt: 1,
+                              borderColor: "grey.300",
+                              color: "text.secondary",
+                            }}
                           >
                             Clear all filters
                           </Button>
@@ -612,9 +789,11 @@ function App() {
                 )}
 
                 {/* ── Favorites Tab ── */}
-                {activeTab === 1 && (
-                  favorites.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {activeTab === 1 &&
+                  (favorites.length > 0 ? (
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    >
                       {favorites.map((therapist, index) => (
                         <TherapistCard
                           key={therapist.id}
@@ -628,23 +807,28 @@ function App() {
                   ) : (
                     <Box
                       sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minHeight: '240px',
-                        flexDirection: 'column',
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        minHeight: "240px",
+                        flexDirection: "column",
                         gap: 1,
                       }}
                     >
-                      <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
+                      <Typography
+                        sx={{
+                          fontSize: "1.125rem",
+                          fontWeight: 600,
+                          color: "text.primary",
+                        }}
+                      >
                         No saved therapists yet
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Bookmark therapists you want to revisit
                       </Typography>
                     </Box>
-                  )
-                )}
+                  ))}
               </Box>
             </Box>
           )}
@@ -654,12 +838,19 @@ function App() {
             anchor="left"
             open={filtersOpen}
             onClose={() => setFiltersOpen(false)}
-            sx={{ '& .MuiDrawer-paper': { width: 300, p: 2.5 } }}
+            sx={{ "& .MuiDrawer-paper": { width: 300, p: 2.5 } }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
               <Typography
                 variant="overline"
-                sx={{ color: 'text.secondary', letterSpacing: '0.1em' }}
+                sx={{ color: "text.secondary", letterSpacing: "0.1em" }}
               >
                 Refine Results
               </Typography>
@@ -667,7 +858,7 @@ function App() {
                 size="small"
                 variant="contained"
                 onClick={() => setFiltersOpen(false)}
-                sx={{ fontSize: '0.8125rem', px: 2 }}
+                sx={{ fontSize: "0.8125rem", px: 2 }}
               >
                 Done
               </Button>
