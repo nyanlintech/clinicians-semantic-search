@@ -19,8 +19,9 @@ search_service = SearchService()
 class SearchQuery(BaseModel):
     query: Optional[str] = None  # For backward compatibility
     criteria: Optional[List[str]] = None  # New multi-criteria support
-    limit: int = 500  # Reduced default limit
-    min_similarity: float = 0.2  # Add similarity threshold
+    page: int = 1
+    page_size: int = 20
+    min_similarity: float = 0.2
     insurance: Optional[List[str]] = None
     titles: Optional[List[str]] = None
 
@@ -63,6 +64,14 @@ class TherapistResponse(BaseModel):
         from_attributes = True
 
 
+class PaginatedResponse(BaseModel):
+    items: List[TherapistResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
+
+
 @router.get("/filters")
 async def get_filters(db: Session = Depends(get_db)):
     """Get all available insurance providers and titles for filtering."""
@@ -80,7 +89,10 @@ async def get_filters(db: Session = Depends(get_db)):
     }
 
 
-@router.post("/search", response_model=List[TherapistResponse])
+MAX_POOL = 200  # max candidates fetched before pagination
+
+
+@router.post("/search", response_model=PaginatedResponse)
 async def search_therapists(
     search_query: SearchQuery,
     db: Session = Depends(get_db)
@@ -88,38 +100,46 @@ async def search_therapists(
     """
     Search for therapists using semantic similarity with optional filtering.
     Supports both single query and multiple criteria formats.
+    Returns paginated results.
     """
     try:
         logger.info("Received search query: %s", search_query)
 
-        # Convert empty lists to None to avoid filtering with empty lists
         insurance = search_query.insurance if search_query.insurance else None
         titles = search_query.titles if search_query.titles else None
 
-        logger.debug("Processed filters - Insurance: %s, Titles: %s", insurance, titles)
-
-        # Determine the query format and convert to single query string
         if search_query.criteria:
             query = " AND ".join(search_query.criteria)
-            logger.debug("Using criteria format: %s", search_query.criteria)
         elif search_query.query:
             query = search_query.query
-            logger.debug("Using single query format: %s", query)
         else:
             raise HTTPException(status_code=400, detail="Either 'query' or 'criteria' must be provided")
 
-        results = await asyncio.to_thread(
+        all_results = await asyncio.to_thread(
             search_service.search_therapists,
             db,
             query,
             insurance,
             titles,
-            search_query.limit,
+            MAX_POOL,
             search_query.min_similarity,
         )
-        logger.info("Search returned %d results (limit: %d, min_similarity: %.2f)",
-                    len(results), search_query.limit, search_query.min_similarity)
-        return results
+
+        total = len(all_results)
+        page = max(1, search_query.page)
+        page_size = max(1, search_query.page_size)
+        start = (page - 1) * page_size
+        end = start + page_size
+        items = all_results[start:end]
+
+        logger.info("Search: %d total results, returning page %d (%d items)", total, page, len(items))
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            has_more=end < total,
+        )
     except HTTPException:
         raise
     except Exception as e:
