@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Therapist, SearchQuery, Filters } from '../types/therapist';
+import type { SearchQuery, Filters, PaginatedResponse } from '../types/therapist';
 
 const rawApiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, '').endsWith('/api/v1')
@@ -25,17 +25,17 @@ export class SearchRequestError extends Error {
     }
 }
 
-export const searchTherapists = async (query: SearchQuery): Promise<Therapist[]> => {
+export const searchTherapists = async (query: SearchQuery): Promise<PaginatedResponse> => {
     const requestBody = {
         criteria: query.criteria,
         insurance: query.insurance || [],
-        titles: query.titles || []
+        titles: query.titles || [],
+        page: query.page ?? 1,
+        page_size: query.page_size ?? 20,
     };
-    
-    console.log('Sending search request:', requestBody);
 
     try {
-        const response = await api.post<Therapist[]>('/search', requestBody);
+        const response = await api.post<PaginatedResponse>('/search', requestBody);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
