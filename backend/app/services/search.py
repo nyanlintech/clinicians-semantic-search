@@ -203,7 +203,10 @@ class SearchService:
             'insurance': therapist.insurance,
             'other_techniques': therapist.other_techniques,
             'other_issues': therapist.other_issues,
-            'url': therapist.url
+            'url': therapist.url,
+            'image': therapist.image,
+            'telehealth': therapist.telehealth,
+            'in_person': therapist.in_person,
         }
 
         # Transform approaches
