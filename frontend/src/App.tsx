@@ -79,7 +79,6 @@ function App() {
   const [results, setResults] = useState<Therapist[]>([]);
   const [favorites, setFavorites] = useState<Therapist[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, string[]>
@@ -90,9 +89,6 @@ function App() {
   const [lastSearchCriteria, setLastSearchCriteria] = useState<string[]>([]);
   const [lastSearchInsurance, setLastSearchInsurance] = useState<string[]>([]);
   const [lastSearchTitles, setLastSearchTitles] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const slowSearchTimerRef = useRef<number | null>(null);
 
@@ -129,8 +125,6 @@ function App() {
     };
   }, []);
 
-  const PAGE_SIZE = 20;
-
   const filterValid = (items: Therapist[]) =>
     items.filter((t) => t.name?.trim() && (t.intro?.trim() || t.title?.trim()));
 
@@ -144,9 +138,6 @@ function App() {
     setSearchError(null);
     setIsSlowSearch(false);
     setResults([]);
-    setCurrentPage(1);
-    setTotalResults(0);
-    setHasMore(false);
     setActiveTab(0);
     setSelectedFilters({});
     setLastSearchCriteria(criteria);
@@ -169,16 +160,11 @@ function App() {
         criteria,
         insurance: insurance.length > 0 ? insurance : undefined,
         titles: titles.length > 0 ? titles : undefined,
-        page: 1,
-        page_size: PAGE_SIZE,
       });
 
       clearSlowSearchTimer();
       setIsSlowSearch(false);
-      setResults(filterValid(data.items));
-      setTotalResults(data.total);
-      setHasMore(data.has_more);
-      setCurrentPage(1);
+      setResults(filterValid(data));
       setTimeout(() => {
         if (resultsRef.current) {
           const top =
@@ -204,38 +190,12 @@ function App() {
     }
   };
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return;
-    setIsLoadingMore(true);
-    const nextPage = currentPage + 1;
-    try {
-      const data = await searchTherapists({
-        criteria: lastSearchCriteria,
-        insurance:
-          lastSearchInsurance.length > 0 ? lastSearchInsurance : undefined,
-        titles: lastSearchTitles.length > 0 ? lastSearchTitles : undefined,
-        page: nextPage,
-        page_size: PAGE_SIZE,
-      });
-      setResults((prev) => [...prev, ...filterValid(data.items)]);
-      setHasMore(data.has_more);
-      setCurrentPage(nextPage);
-    } catch (error) {
-      console.error("Error loading more therapists:", error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
   const clearResults = () => {
     clearSlowSearchTimer();
     setResults([]);
     setSelectedFilters({});
     setSearchError(null);
     setIsSlowSearch(false);
-    setCurrentPage(1);
-    setTotalResults(0);
-    setHasMore(false);
     setSearchParams({}, { replace: true });
   };
 
@@ -347,7 +307,7 @@ function App() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {hasResults && !isLoading && (
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  {totalResults} results
+                  {results.length} results
                 </Typography>
               )}
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -690,12 +650,8 @@ function App() {
                           }}
                         >
                           {activeFilterChips.length > 0
-                            ? `${filteredResults.length} of ${results.length} loaded therapists after filtering`
-                            : `Showing ${
-                                results.length
-                              } of ${totalResults} therapist${
-                                totalResults !== 1 ? "s" : ""
-                              } found`}
+                            ? `${filteredResults.length} of ${results.length} therapists after filtering`
+                            : `${results.length} therapist${results.length !== 1 ? "s" : ""} found`}
                         </Typography>
                         <Box
                           sx={{
@@ -714,33 +670,6 @@ function App() {
                             />
                           ))}
                         </Box>
-                        {hasMore && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "center",
-                              mt: 3,
-                            }}
-                          >
-                            <Button
-                              variant="outlined"
-                              onClick={handleLoadMore}
-                              disabled={isLoadingMore}
-                              startIcon={
-                                isLoadingMore ? (
-                                  <CircularProgress size={16} color="inherit" />
-                                ) : undefined
-                              }
-                              sx={{
-                                borderColor: "grey.300",
-                                color: "text.secondary",
-                                px: 4,
-                              }}
-                            >
-                              {isLoadingMore ? "Loading..." : `Load more`}
-                            </Button>
-                          </Box>
-                        )}
                       </>
                     ) : (
                       <Box
