@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.services.search import SearchService
 from app.models.therapist import Therapist
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +24,14 @@ class SearchQuery(BaseModel):
     titles: Optional[List[str]] = None
 
 
-class Approach(RootModel):
-    root: str
+class Approach(BaseModel):
+    name: str
+    description: Optional[str] = None
 
 
-class Speciality(RootModel):
-    root: str
+class Speciality(BaseModel):
+    name: str
+    description: Optional[str] = None
 
 
 class TherapistResponse(BaseModel):
