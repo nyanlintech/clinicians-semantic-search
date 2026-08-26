@@ -2,8 +2,9 @@ name: Update CLAUDE.md
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 1 * *'  # monthly on the 1st
+  push:
+    branches:
+      - main
 
 jobs:
   update-claude-md:
