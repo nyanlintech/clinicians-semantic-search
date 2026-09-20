@@ -1,7 +1,5 @@
 # API Reference
 
-TESTING
-
 Complete documentation of the Clinicians Semantic Search API endpoints.
 
 ## 📌 Base URL
