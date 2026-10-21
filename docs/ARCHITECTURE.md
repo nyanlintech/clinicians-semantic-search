@@ -112,6 +112,18 @@ frontend/src/
 4. `app/services/embedding.py` generates the embedding per row.
 5. `app/services/scheduler.py` handles periodic re-embedding/refresh.
 
+## Deployment
+
+**Backend — Fly.io** (`backend/fly.toml`, app `clinicians-semantic-search`):
+- `backend/Dockerfile` is a multi-stage build that bakes the `all-MiniLM-L6-v2` model into the image, so machines don't download it at boot.
+- `[deploy].release_command` runs `init_db()` before cutting traffic over.
+- `/health` gates the rollout; 1 machine stays running at all times (`min_machines_running = 1`).
+- Deploys automatically via `.github/workflows/deploy-backend.yml` on push to `main` (paths under `backend/`), using the `FLY_API_TOKEN` repo secret. `scripts/deploy/deploy-backend.sh` runs the same `fly deploy` manually/locally.
+
+**Frontend — Cloudflare Pages**:
+- Connected to this repo via Cloudflare's GitHub integration; builds and deploys automatically on push to `main` (root dir `frontend`, build command `yarn build`, output `dist`).
+- `scripts/deploy/deploy-frontend.sh` only runs a local `yarn build` as a pre-push sanity check — it does not deploy anything itself.
+
 ## Configuration
 
 Environment variables are read via `app/core/config.py` (`Settings`). See `backend/.env.example` for the full list (DB connection, `API_V1_STR`, `ALLOWED_ORIGINS`, `PRELOAD_SEARCH_MODEL`, etc.) — not duplicated here to avoid drift.
