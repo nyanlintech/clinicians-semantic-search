@@ -102,7 +102,7 @@ GET /api/v1/filters
 GET /health
 ```
 
-See [API Documentation](../docs/API.md) for full endpoint details.
+See the backend's interactive docs at `http://localhost:8000/docs` (Swagger UI) for full endpoint details.
 
 ## 🎯 Features
 

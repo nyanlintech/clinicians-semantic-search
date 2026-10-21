@@ -62,6 +62,23 @@ yarn build                             # production build
 yarn lint                              # lint
 ```
 
+## Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `net::ERR_CONNECTION_REFUSED` | Start the backend server |
+| Garbled characters (e.g. `âDR.SANJAYâ`) | `uv run python -m app.scripts.clean_encoding` |
+| Database connection error | Check `.env` / `DATABASE_URL` / that PostgreSQL is running |
+| `ModuleNotFoundError` | `uv sync` |
+
+## Scripts
+
+- `scripts/dev/` — local dev servers (`start-dev-db.sh`, `start-frontend.sh`)
+- `scripts/utils/` — DB setup/reset/migrate/check-status
+- `scripts/deploy/` — backend/frontend deploy
+
+Full API reference: FastAPI auto-generates Swagger UI at `http://localhost:8000/docs` (don't hand-maintain a separate API doc — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+
 ## Contributing
 
 Contributions are welcome. Please open an issue before starting significant work so we can align on approach.

@@ -24,7 +24,7 @@ git checkout -b bugfix/issue-description
 
 ### 3. Set Up Development Environment
 
-Follow the setup instructions in [README.md](README.md) and [Quick Start Guide](docs/QUICK_START.md).
+Follow the setup instructions in [README.md](README.md).
 
 ## 💻 Development Guidelines
 
@@ -266,7 +266,6 @@ npm run build
 - [Backend README](backend/README.md)
 - [Frontend README](frontend/README.md)
 - [Architecture Documentation](docs/ARCHITECTURE.md)
-- [Quick Start Guide](docs/QUICK_START.md)
 
 ## 🤝 Getting Help
 
