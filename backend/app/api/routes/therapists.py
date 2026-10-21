@@ -1,14 +1,13 @@
 import asyncio
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.services.search import SearchService
 from app.models.therapist import Therapist
-from pydantic import BaseModel
+from app.services.search import SearchService
 
 logger = logging.getLogger(__name__)
 
@@ -17,21 +16,21 @@ search_service = SearchService()
 
 
 class SearchQuery(BaseModel):
-    query: Optional[str] = None  # For backward compatibility
-    criteria: Optional[List[str]] = None  # New multi-criteria support
+    query: str | None = None  # For backward compatibility
+    criteria: list[str] | None = None  # New multi-criteria support
     min_similarity: float = 0.2
-    insurance: Optional[List[str]] = None
-    titles: Optional[List[str]] = None
+    insurance: list[str] | None = None
+    titles: list[str] | None = None
 
 
 class Approach(BaseModel):
-    name: str
-    description: Optional[str] = None
+    label: str
+    text: str
 
 
 class Speciality(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str
 
 
 class TherapistResponse(BaseModel):
@@ -44,17 +43,16 @@ class TherapistResponse(BaseModel):
     status: str | None
     intro: str | None
     ideal_client: str | None
-    approaches: List[Approach] | None
+    approaches: list[Approach] | None
     rate_min: str | None
     rate_max: str | None
     free_consultation: bool | None
     practicing_since: str | None
-    languages: str | None
-    services: List[str] | None
-    insurance: List[str] | None
-    specialities: List[Speciality] | None
-    other_techniques: List[str] | None
-    other_issues: List[str] | None
+    services: list[str] | None
+    insurance: list[str] | None
+    specialities: list[Speciality] | None
+    other_techniques: list[str] | None
+    other_issues: list[str] | None
     url: str | None
     image: str | None = None
     telehealth: bool | None = None
@@ -64,32 +62,25 @@ class TherapistResponse(BaseModel):
         from_attributes = True
 
 
-
 @router.get("/filters")
 async def get_filters(db: Session = Depends(get_db)):
     """Get all available insurance providers and titles for filtering."""
     # Get unique insurance providers
     insurance = db.query(Therapist.insurance).distinct().all()
-    insurance_list = list(set([item for sublist in insurance if sublist[0] for sublist in insurance for item in sublist[0]]))
+    insurance_list = {item for (sublist,) in insurance if sublist for item in sublist}
 
     # Get unique titles
     titles = db.query(Therapist.title).distinct().all()
-    titles_list = list(set([title[0] for title in titles if title[0]]))
+    titles_list = {title for (title,) in titles if title}
 
-    return {
-        "insurance": sorted(insurance_list),
-        "titles": sorted(titles_list)
-    }
+    return {"insurance": sorted(insurance_list), "titles": sorted(titles_list)}
 
 
 MAX_POOL = 200
 
 
-@router.post("/search", response_model=List[TherapistResponse])
-async def search_therapists(
-    search_query: SearchQuery,
-    db: Session = Depends(get_db)
-):
+@router.post("/search", response_model=list[TherapistResponse])
+async def search_therapists(search_query: SearchQuery, db: Session = Depends(get_db)):
     """
     Search for therapists using semantic similarity with optional filtering.
     Supports both single query and multiple criteria formats.
@@ -105,7 +96,9 @@ async def search_therapists(
         elif search_query.query:
             query = search_query.query
         else:
-            raise HTTPException(status_code=400, detail="Either 'query' or 'criteria' must be provided")
+            raise HTTPException(
+                status_code=400, detail="Either 'query' or 'criteria' must be provided"
+            )
 
         results = await asyncio.to_thread(
             search_service.search_therapists,
