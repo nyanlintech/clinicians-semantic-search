@@ -1,57 +1,68 @@
-from typing import List, Dict
-from sqlalchemy.orm import Session
-from app.models.therapist import Therapist
-from app.services.processor import TherapistProcessor
-from app.services.embedding import EmbeddingService
 import logging
 
+from sqlalchemy.orm import Session
+
+from app.models.therapist import Therapist
+from app.services.embedding import EmbeddingService
+from app.services.processor import TherapistProcessor
+
 logger = logging.getLogger(__name__)
+
 
 class IngestionService:
     def __init__(self, db: Session):
         self.db = db
         self.processor = TherapistProcessor()
         self.embedding_service = EmbeddingService()
-    
-    def ingest_therapist(self, raw_data: Dict) -> Therapist:
-        """Process and ingest a single therapist."""
-        logger.info(f"\nProcessing therapist: {raw_data.get('name', 'Unknown')}")
-        
-        # Process the data
+
+    def ingest_therapist(self, raw_data: dict) -> Therapist | None:
+        """Process and upsert a single therapist, keyed by scrape url."""
+        if not self.processor.is_usable_profile(raw_data):
+            logger.debug("Skipping unfetched/empty profile: %s", raw_data.get("url"))
+            return None
+
         processed_data = self.processor.process_therapist_data(raw_data)
-        logger.info(f"Processed data for {processed_data['name']}")
-        
-        # Generate embedding
+        logger.info(f"Processing therapist: {processed_data['name']}")
+
         embedding = self.embedding_service.generate_therapist_embedding(processed_data)
-        
+
         # Remove summary fields that aren't in the model
-        processed_data.pop('approach_summary', None)
-        processed_data.pop('specialties_summary', None)
-        
-        # Create therapist record
-        therapist = Therapist(
-            **processed_data,
-            embedding=embedding
+        processed_data.pop("approach_summary", None)
+        processed_data.pop("specialties_summary", None)
+
+        therapist = (
+            self.db.query(Therapist).filter_by(url=processed_data["url"]).first()
         )
-        
-        # Save to database
-        self.db.add(therapist)
+        if therapist:
+            for key, value in processed_data.items():
+                setattr(therapist, key, value)
+            therapist.embedding = embedding
+        else:
+            therapist = Therapist(**processed_data, embedding=embedding)
+            self.db.add(therapist)
+
         self.db.commit()
         self.db.refresh(therapist)
-        
+
         logger.info(f"Successfully ingested therapist: {therapist.name}")
         return therapist
-    
-    def ingest_therapists_batch(self, raw_data_list: List[Dict]) -> List[Therapist]:
-        """Process and ingest multiple therapists."""
+
+    def ingest_therapists_batch(self, raw_data_list: list[dict]) -> list[Therapist]:
+        """Process and upsert multiple therapists, skipping unfetched/empty scrape shells."""
         therapists = []
         total = len(raw_data_list)
-        logger.info(f"\nStarting batch ingestion of {total} therapists")
-        
+        skipped = 0
+        logger.info(f"Starting batch ingestion of {total} raw records")
+
         for i, raw_data in enumerate(raw_data_list, 1):
-            logger.info(f"\nProcessing therapist {i}/{total}")
+            logger.info(f"Processing record {i}/{total}")
             therapist = self.ingest_therapist(raw_data)
+            if therapist is None:
+                skipped += 1
+                continue
             therapists.append(therapist)
-            
-        logger.info(f"\nCompleted batch ingestion of {len(therapists)} therapists")
-        return therapists 
+
+        logger.info(
+            f"Completed batch ingestion: {len(therapists)} upserted, {skipped} skipped"
+        )
+        return therapists
