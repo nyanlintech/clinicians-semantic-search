@@ -4,21 +4,22 @@ from alembic import context
 
 from app.core.config import settings
 from app.db.base import Base
-from app import models  # ensures all models are imported
+from app import models  # noqa: F401 - import has the side effect of registering Therapist on Base.metadata
 
 # this is the Alembic Config object
 config = context.config
 
 # set SQLAlchemy DB URL from settings
-config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.resolved_database_url)
 
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
 def run_migrations_offline():
     context.configure(
-        url=settings.SQLALCHEMY_DATABASE_URL,
+        url=settings.resolved_database_url,
         target_metadata=target_metadata,
         literal_binds=True,
     )
