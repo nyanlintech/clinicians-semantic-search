@@ -524,30 +524,27 @@ export const TherapistCard = ({ therapist, isFavorite, onToggleFavorite, index =
               Therapeutic Approaches
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {therapist.approaches.map((approach, i) => {
-
-                const name = typeof approach === 'string' ? approach : approach.name;
-                return (
-                  <Box
-                    key={i}
+              {therapist.approaches.map((approach, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    py: 0.5,
+                    borderBottom: '1px solid rgba(26, 18, 8, 0.05)',
+                  }}
+                >
+                  <Typography
                     sx={{
-                      py: 0.5,
-                      borderBottom: '1px solid rgba(26, 18, 8, 0.05)',
+                      fontSize: '0.9rem',
+                      color: 'text.primary',
+                      lineHeight: 1.6,
+                      fontFamily: '"DM Sans", sans-serif',
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: '0.9rem',
-                        color: 'text.primary',
-                        lineHeight: 1.6,
-                        fontFamily: '"DM Sans", sans-serif',
-                      }}
-                    >
-                      {name}
-                    </Typography>
-                  </Box>
-                );
-              })}
+                    {approach.label ? <strong>{approach.label}: </strong> : null}
+                    {approach.text}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
           </Box>
         )}

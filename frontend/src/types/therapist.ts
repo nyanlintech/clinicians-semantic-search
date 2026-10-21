@@ -1,11 +1,6 @@
 export interface Approach {
-    name: string;
-    description?: string;
-}
-
-export interface Speciality {
-    name: string;
-    description?: string;
+    label: string;
+    text: string;
 }
 
 export interface Therapist {
@@ -26,7 +21,7 @@ export interface Therapist {
     languages: string | null;
     services: string[] | null;
     insurance: string[] | null;
-    specialities: Speciality[] | null;
+    specialities: string[] | null;
     other_techniques: string[] | null;
     other_issues: string[] | null;
     url: string | null;
